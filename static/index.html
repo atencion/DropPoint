@@ -15,15 +15,64 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     ">
-  <div style="
+
+  <!-- Main app wrapper -->
+  <div id="dp-app-wrap" style="
         -webkit-app-region: drag;
         border-radius: 0.5rem;
         width: 100%;
         height: 100%;
         background-color: rgba(255, 250, 240);
         backdrop-filter: blur(20px) saturate(125%);
+        display: flex;
+        flex-direction: column;
       ">
-    <div class="close" title="Clear">&#215;</div>
+
+    <!-- ── TOOLBAR ─────────────────────────────────────────── -->
+    <div id="dp-toolbar">
+      <div id="dp-title-group">
+      <span id="dp-zone-name" title="Drag from here">Drop Zone</span>
+      <button id="dp-rename-btn" class="dp-title-btn" title="Rename this Drop Zone">Edit</button>
+      </div>
+      <input id="dp-zone-input" type="text" value="Drop Zone" />
+
+      <!-- Action buttons -->
+      <div id="dp-btn-group">
+        <button id="dp-new-btn" title="Open a new Drop Zone" class="dp-btn dp-btn-new">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14"/><path d="M5 12h14"/>
+          </svg>
+          New
+        </button>
+        <button id="dp-save-btn" title="Save this zone to Gallery" class="dp-btn dp-btn-save">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Save
+        </button>
+        <button id="dp-gallery-btn" title="Open Gallery" class="dp-btn dp-btn-gallery">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          Gallery
+        </button>
+        <button id="dp-clipboard-btn" title="Open Clipboard Flow" class="dp-btn dp-btn-clipboard">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 4H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/>
+          </svg>
+          Clipboard
+        </button>
+        <button id="dp-clear-btn" title="Clear this Drop Zone" class="dp-btn dp-btn-clear">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+          Clear
+        </button>
+        <button id="dp-close-btn" title="Close this Drop Zone" class="dp-btn dp-btn-close" aria-label="Close this Drop Zone">&times;</button>
+      </div>
+    </div>
+
+    <!-- ── DROP ZONE ──────────────────────────────────────── -->
     <div id="droppoint">
       <div class="upload">
         <img src="./media/upload.png" alt="Upload Here" style="opacity: 0.8; pointer-events: none" />
@@ -37,9 +86,65 @@
         </div>
         Drag Your <num></num> File(s) Out
       </div>
+      <div id="dp-memory-actions">
+        <div id="dp-drag-selected" class="dp-memory-drag-pill" draggable="true">Drag selected</div>
+        <div id="dp-drag-all" class="dp-memory-drag-pill" draggable="true">Drag all</div>
+        <button id="dp-clear-missing" class="dp-memory-clear-btn">Clear missing</button>
+      </div>
+      <div id="dp-memory-list"></div>
+      <div id="dp-drop-hint">Drop files or paste text/images with Ctrl+V</div>
+    </div>
+
+    <!-- ── SAVE TOAST ──────────────────────────────────────── -->
+    <div id="dp-toast">Zone saved to Gallery ✓</div>
+
+  </div><!-- /dp-app-wrap -->
+
+  <!-- ── GALLERY OVERLAY ────────────────────────────────────── -->
+  <div id="dp-gallery-overlay">
+    <div id="dp-gallery-panel">
+
+      <div id="dp-gallery-header">
+        <div id="dp-gallery-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          Gallery
+        </div>
+        <div id="dp-gallery-controls">
+          <button id="dp-gallery-up" class="dp-card-btn dp-card-btn-load" title="Go to parent folder">Up</button>
+          <button id="dp-gallery-new-folder" class="dp-card-btn dp-card-btn-load" title="Create a new folder">New Folder</button>
+          <button id="dp-gallery-view-toggle" class="dp-card-btn dp-card-btn-load" title="Toggle list/grid view">Grid</button>
+        </div>
+        <button id="dp-gallery-close" title="Close Gallery">&#215;</button>
+      </div>
+      <div id="dp-gallery-breadcrumbs"></div>
+
+      <div id="dp-gallery-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c0c0c0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <p>No saved zones yet.<br/>Drop files and click <strong>Save</strong>.</p>
+      </div>
+
+      <div id="dp-gallery-list"></div>
+
+    </div>
+  </div><!-- /dp-gallery-overlay -->
+
+  <div id="dp-clipboard-overlay">
+    <div id="dp-clipboard-panel">
+      <div id="dp-clipboard-header">
+        <div id="dp-clipboard-title">Clipboard Flow</div>
+        <button id="dp-clipboard-close" title="Close Clipboard">&#215;</button>
+      </div>
+      <div id="dp-clipboard-list"></div>
     </div>
   </div>
+
 </body>
+
+<!-- ══════════════════ STYLES ══════════════════ -->
 <style>
   * {
     padding: 0;
@@ -49,25 +154,25 @@
 
   /* Tilt animation keyframes for multiple files */
   @keyframes tilt {
-    from {
-      transform: rotate(0deg);
-    }
-
-    to {
-      transform: rotate(25deg);
-      transform-origin: bottom;
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(25deg); transform-origin: bottom; }
   }
 
   @keyframes tiltmore {
-    from {
-      transform: rotate(0deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(50deg); transform-origin: bottom; }
+  }
 
-    to {
-      transform: rotate(50deg);
-      transform-origin: bottom;
-    }
+  @keyframes dp-fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes dp-toastIn {
+    0%   { opacity: 0; transform: translateY(10px); }
+    20%  { opacity: 1; transform: translateY(0); }
+    80%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(10px); }
   }
 
   html {
@@ -82,55 +187,213 @@
     height: 100vh;
   }
 
-  .close {
-    width: 1rem;
-    height: 1rem;
-    font-size: 0.8rem;
+  /* ── TOOLBAR ─────────────────────────────────── */
+  #dp-toolbar {
     display: flex;
-    background-color: #c0c0c0;
     align-items: center;
-    justify-content: center;
-    position: absolute;
-    right: 5%;
-    top: 5%;
-    border-radius: 2rem;
-    z-index: 10;
-    cursor: pointer;
-    user-select: none;
+    justify-content: space-between;
+    padding: 5px 8px 4px 10px;
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+    gap: 4px;
+    min-height: 28px;
+  }
+
+  #dp-zone-name {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #050a0fa0;
+    cursor: move;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 130px;
+    flex: 1;
+    -webkit-app-region: drag;
+    letter-spacing: 0.01em;
+    transition: color 0.2s;
+  }
+
+  #dp-zone-name:hover {
+    color: #050a0f;
+  }
+
+  #dp-zone-input {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #050a0f;
+    border: 1px solid rgba(5,10,15,0.25);
+    border-radius: 4px;
+    padding: 1px 5px;
+    background: rgba(255,255,255,0.7);
+    outline: none;
+    flex: 1;
+    max-width: 90px;
+    display: none;
     -webkit-app-region: no-drag;
   }
 
-  @keyframes dragged {
-    from {
-      border-radius: 100px;
-      border: 2px dashed #050a0f00;
-    }
+  #dp-title-group {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    -webkit-app-region: drag;
+  }
 
-    to {
-      border-radius: 6px;
-      border: 2px dashed #050a0f85;
-    }
+  .dp-title-btn {
+    -webkit-app-region: no-drag;
+    border: 1px solid rgba(5,10,15,0.16);
+    background: rgba(5,10,15,0.05);
+    color: #465365;
+    border-radius: 999px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    cursor: pointer;
+  }
+
+  .dp-title-btn:hover {
+    background: rgba(5,10,15,0.12);
+    color: #1e2a39;
+  }
+
+  #dp-zone-input:focus {
+    border-color: rgba(5,10,15,0.5);
+    box-shadow: 0 0 0 2px rgba(5,10,15,0.08);
+  }
+
+  #dp-btn-group {
+    display: flex;
+    gap: 3px;
+    flex-shrink: 0;
+    -webkit-app-region: no-drag;
+  }
+
+  .dp-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    line-height: 1;
+    text-transform: uppercase;
+    -webkit-app-region: no-drag;
+  }
+
+  .dp-btn svg {
+    flex-shrink: 0;
+  }
+
+  .dp-btn-save {
+    background: rgba(5,10,15,0.08);
+    color: #050a0fa0;
+  }
+
+  .dp-btn-save:hover {
+    background: rgba(5,10,15,0.16);
+    color: #050a0f;
+  }
+
+  .dp-btn-save.dp-has-files {
+    background: rgba(22, 163, 74, 0.12);
+    color: rgb(22, 163, 74);
+  }
+
+  .dp-btn-save.dp-has-files:hover {
+    background: rgba(22, 163, 74, 0.22);
+  }
+
+  .dp-btn-gallery {
+    background: rgba(5,10,15,0.08);
+    color: #050a0fa0;
+  }
+
+  .dp-btn-gallery:hover {
+    background: rgba(5,10,15,0.16);
+    color: #050a0f;
+  }
+
+  .dp-btn-gallery.dp-has-saved {
+    background: rgba(8,145,178,0.12);
+    color: rgb(8,145,178);
+  }
+
+  .dp-btn-gallery.dp-has-saved:hover {
+    background: rgba(8,145,178,0.22);
+  }
+
+  .dp-btn-new {
+    background: rgba(5,10,15,0.08);
+    color: #050a0fa0;
+  }
+
+  .dp-btn-new:hover {
+    background: rgba(5,10,15,0.16);
+    color: #050a0f;
+  }
+
+  .dp-btn-clear {
+    background: rgba(224,82,82,0.08);
+    color: #d74a4a;
+  }
+
+  .dp-btn-clear:hover {
+    background: rgba(224,82,82,0.18);
+    color: #bf3030;
+  }
+
+  .dp-btn-close {
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1;
+    background: rgba(5,10,15,0.07);
+    color: #5d6979;
+    justify-content: center;
+  }
+
+  .dp-btn-close:hover {
+    background: rgba(224,82,82,0.2);
+    color: #bf3030;
+  }
+
+  /* ── DROP ZONE ────────────────────────────────── */
+  @keyframes dragged {
+    from { border-radius: 100px; border: 2px dashed #050a0f00; }
+    to   { border-radius: 6px;   border: 2px dashed #050a0f85; }
   }
 
   .dragged {
     cursor: grabbing;
     animation: dragged 0.5s forwards;
-    /* transition: all 0.25s ease-in-out; */
   }
 
   #droppoint {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-55%, -55%);
-    width: 140px;
-    height: 140px;
-    margin: 8px;
+    position: relative;
+    flex: 1;
+    margin: 4px 8px 8px 8px;
     color: #050a0fa2;
     user-select: none;
     border: 2px transparent solid;
     -webkit-app-region: no-drag;
     transition: all 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    gap: 6px;
   }
 
   .upload {
@@ -139,6 +402,7 @@
     display: flex;
     text-align: center;
     flex-direction: column;
+    font-size: 0.75rem;
     font-family: sans-serif;
     user-select: none;
     align-items: center;
@@ -156,14 +420,182 @@
     display: none;
     text-align: center;
     flex-direction: column;
+    font-size: 0.75rem;
     font-family: sans-serif;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #dp-memory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    max-height: 100%;
+    padding-right: 2px;
+  }
+
+  #dp-memory-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .dp-memory-drag-pill {
+    border: 1px solid rgba(5, 10, 15, 0.2);
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.72);
+    color: #23303f;
+    cursor: grab;
+    user-select: none;
+    -webkit-app-region: no-drag;
+  }
+
+  .dp-memory-drag-pill:active {
+    cursor: grabbing;
+  }
+
+  .dp-memory-clear-btn {
+    margin-left: auto;
+    border: 1px solid rgba(224, 82, 82, 0.24);
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    background: rgba(224, 82, 82, 0.08);
+    color: #c53f3f;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+  }
+
+  .dp-memory-clear-btn:hover {
+    background: rgba(224, 82, 82, 0.15);
+  }
+
+  #dp-memory-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  #dp-memory-list::-webkit-scrollbar-thumb {
+    background: rgba(5, 10, 15, 0.18);
+    border-radius: 8px;
+  }
+
+  .dp-memory-item {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    border: 1px solid rgba(5, 10, 15, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.82);
+    padding: 6px;
+    min-height: 52px;
+    -webkit-app-region: no-drag;
+  }
+
+  .dp-memory-item.dp-memory-selected {
+    border-color: rgba(8, 145, 178, 0.45);
+    background: rgba(8, 145, 178, 0.08);
+  }
+
+  .dp-memory-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(5, 10, 15, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #4e5968;
+    user-select: none;
+  }
+
+  .dp-memory-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .dp-memory-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .dp-memory-name {
+    font-size: 0.69rem;
+    font-weight: 700;
+    color: #050a0f;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dp-memory-preview {
+    font-size: 0.62rem;
+    color: #6a7788;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dp-memory-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .dp-mini-btn {
+    border: 1px solid rgba(5, 10, 15, 0.14);
+    border-radius: 5px;
+    background: rgba(5, 10, 15, 0.05);
+    color: #050a0f;
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    padding: 3px 6px;
+    cursor: pointer;
+  }
+
+  .dp-mini-btn:hover {
+    background: rgba(5, 10, 15, 0.12);
+  }
+
+  .dp-memory-missing {
+    border-color: rgba(224, 82, 82, 0.4);
+    background: rgba(224, 82, 82, 0.08);
+  }
+
+  #dp-drop-hint {
+    border: 1px dashed rgba(5, 10, 15, 0.25);
+    border-radius: 8px;
+    padding: 7px;
+    text-align: center;
+    font-size: 0.62rem;
+    color: #5d6979;
+    background: rgba(255, 255, 255, 0.45);
+    min-height: 30px;
+    display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .file-icon {
     width: 100%;
-    height: 100%;
+    height: 70%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -171,26 +603,786 @@
 
   .file-icon img {
     position: absolute;
-    /* box-shadow: 2px 2px 20px #050a0f13; */
     filter: drop-shadow(2px 2px 4px #050a0f2c);
   }
 
-  .file-icon img:nth-child(1) {
-    z-index: 3;
+  .file-icon img:nth-child(1) { z-index: 3; }
+  .file-icon img:nth-child(2) { z-index: 2; animation: tilt 0.25s ease forwards; }
+  .file-icon img:nth-child(3) { z-index: 1; animation: tiltmore 0.25s ease forwards; }
+
+  /* ── TOAST ────────────────────────────────────── */
+  #dp-toast {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(22, 163, 74, 0.92);
+    color: white;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+    pointer-events: none;
+    display: none;
+    z-index: 200;
   }
 
-  .file-icon img:nth-child(2) {
-    z-index: 2;
-    animation: tilt 0.25s ease forwards;
-    /* transform: translate(10px) rotate(15deg); */
+  #dp-toast.dp-toast-show {
+    display: block;
+    animation: dp-toastIn 2s ease forwards;
   }
 
-  .file-icon img:nth-child(3) {
-    z-index: 1;
-    animation: tiltmore 0.25s ease forwards;
-    /* transform: translate(20px) rotate(30deg); */
+  /* ── GALLERY OVERLAY ──────────────────────────── */
+  #dp-gallery-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(10, 15, 20, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-app-region: no-drag;
+  }
+
+  #dp-gallery-overlay.dp-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: dp-fadeIn 0.2s ease;
+  }
+
+  #dp-gallery-panel {
+    background: rgba(255, 252, 247, 0.97);
+    border-radius: 16px;
+    box-shadow: 0 28px 80px rgba(0,0,0,0.30), 0 8px 24px rgba(0,0,0,0.16);
+    width: min(92vw, 720px);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(5,10,15,0.09);
+  }
+
+  #dp-gallery-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 26px 28px 20px;
+    border-bottom: 1px solid rgba(5,10,15,0.08);
+    flex-shrink: 0;
+  }
+
+  #dp-gallery-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #050a0f;
+    letter-spacing: -0.01em;
+  }
+
+  #dp-gallery-close {
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: rgba(5,10,15,0.06);
+    border-radius: 50%;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #050a0f80;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  #dp-gallery-close:hover {
+    background: rgba(224, 82, 82, 0.15);
+    color: #e05252;
+  }
+
+  #dp-gallery-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 80px 40px;
+    color: #c0c0c0;
+    text-align: center;
+  }
+
+  #dp-gallery-empty p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #aaa;
+  }
+
+  #dp-gallery-empty strong {
+    color: #888;
+  }
+
+  #dp-gallery-list {
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #dp-gallery-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  #dp-gallery-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  #dp-gallery-list::-webkit-scrollbar-thumb {
+    background: rgba(5,10,15,0.15);
+    border-radius: 4px;
+  }
+
+  /* ── GALLERY ZONE CARD ────────────────────────── */
+  .dp-zone-card {
+    background: rgba(255,255,255,0.80);
+    border: 1px solid rgba(5,10,15,0.09);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+
+  .dp-zone-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+    border-color: rgba(5,10,15,0.16);
+  }
+
+  .dp-zone-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .dp-zone-card-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #050a0f;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dp-zone-card-meta {
+    font-size: 0.8rem;
+    color: #888;
+    white-space: nowrap;
+  }
+
+  .dp-zone-card-actions {
+    display: flex;
+    gap: 7px;
+    flex-shrink: 0;
+    align-items: center;
+  }
+
+  .dp-card-btn {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    line-height: 1.4;
+  }
+
+  .dp-card-btn-load {
+    background: rgba(8,145,178,0.1);
+    color: rgb(8,145,178);
+    border-color: rgba(8,145,178,0.2);
+  }
+
+  .dp-card-btn-load:hover {
+    background: rgba(8,145,178,0.2);
+    border-color: rgba(8,145,178,0.4);
+  }
+
+  .dp-card-btn-delete {
+    background: rgba(224,82,82,0.08);
+    color: #e05252;
+    border-color: rgba(224,82,82,0.18);
+  }
+
+  .dp-card-btn-delete:hover {
+    background: rgba(224,82,82,0.18);
+    border-color: rgba(224,82,82,0.35);
+  }
+
+  /* ── GALLERY FILE LIST ─────────────────────────── */
+  .dp-zone-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .dp-file-chip {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    color: #444;
+    background: rgba(5,10,15,0.05);
+    border: 1px solid rgba(5,10,15,0.08);
+    border-radius: 6px;
+    padding: 5px 11px;
+    max-width: 300px;
+  }
+
+  .dp-file-chip-icon {
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+
+  .dp-file-chip-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dp-zone-no-files {
+    font-size: 0.82rem;
+    color: #aaa;
+    font-style: italic;
+  }
+
+  .dp-zone-card-date {
+    font-size: 0.76rem;
+    color: #aaa;
+    margin-top: 2px;
+  }
+
+  /* ── LOADED ZONE INDICATOR ─────────────────────── */
+  .dp-zone-card.dp-card-loaded {
+    border-color: rgba(8,145,178,0.35);
+    background: rgba(8,145,178,0.04);
+  }
+
+  .dp-loaded-badge {
+    font-size: 0.73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgb(8,145,178);
+    background: rgba(8,145,178,0.12);
+    padding: 4px 10px;
+    border-radius: 5px;
   }
 </style>
+
+<!-- ══════════════════ EXISTING DROPPOINT RENDERER ══════════════════ -->
 <script src="../renderer/droppoint.js"></script>
+
+<!-- ══════════════════ NEW FEATURES SCRIPT ══════════════════ -->
+<script>
+(function () {
+  "use strict";
+
+  const ZONE_NAME_KEY = "droppoint_zone_name";
+
+  const zoneName = document.getElementById("dp-zone-name");
+  const renameBtn = document.getElementById("dp-rename-btn");
+  const zoneInput = document.getElementById("dp-zone-input");
+  const newBtn = document.getElementById("dp-new-btn");
+  const saveBtn = document.getElementById("dp-save-btn");
+  const galleryBtn = document.getElementById("dp-gallery-btn");
+  const clearBtn = document.getElementById("dp-clear-btn");
+  const closeBtn = document.getElementById("dp-close-btn");
+  const overlay = document.getElementById("dp-gallery-overlay");
+  const galleryList = document.getElementById("dp-gallery-list");
+  const galleryEmpty = document.getElementById("dp-gallery-empty");
+  const galClose = document.getElementById("dp-gallery-close");
+  const toast = document.getElementById("dp-toast");
+  const memoryList = document.getElementById("dp-memory-list");
+  const dropHint = document.getElementById("dp-drop-hint");
+  const dragSelected = document.getElementById("dp-drag-selected");
+  const dragAll = document.getElementById("dp-drag-all");
+  const clearMissing = document.getElementById("dp-clear-missing");
+  const uploadArea = document.querySelector(".upload");
+  const dragArea = document.getElementById("drag");
+
+  const WIDGET_WIDTH = 360;
+  const WIDGET_MIN_HEIGHT = 240;
+  const WIDGET_MAX_SCREEN_RATIO = 0.7;
+  const GALLERY_W = 800;
+  const GALLERY_H = 600;
+
+  let loadedZoneId = null;
+  let zones = [];
+  let toastTimer = null;
+  let selectedIds = new Set();
+
+  function fileNameFromPath(filePath) {
+    return (filePath || "").replace(/\\/g, "/").split("/").pop() || filePath;
+  }
+
+  function saveZoneName(name) {
+    const finalName = (name || "").trim() || "Drop Zone";
+    zoneName.textContent = finalName;
+    zoneInput.value = finalName;
+    localStorage.setItem(ZONE_NAME_KEY, finalName);
+  }
+
+  function loadZoneName() {
+    saveZoneName(localStorage.getItem(ZONE_NAME_KEY) || "Drop Zone");
+  }
+
+  function updateSaveBtnState() {
+    const files = window.droppoint.getFiles();
+    saveBtn.classList.toggle("dp-has-files", files.length > 0);
+  }
+
+  function updateGalleryBtnState() {
+    galleryBtn.classList.toggle("dp-has-saved", zones.length > 0);
+  }
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.remove("dp-toast-show");
+    void toast.offsetWidth;
+    toast.classList.add("dp-toast-show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("dp-toast-show"), 2100);
+  }
+
+  function previewLabel(item) {
+    if (item.fileType === "text") {
+      return item.previewText ? item.previewText.replace(/\s+/g, " ") : "Text snippet";
+    }
+    if (item.fileType === "image") return item.source === "vault" ? "Pasted image" : "Image reference";
+    return item.source === "vault" ? "Stored in DropPoint" : "Linked reference";
+  }
+
+  function createThumb(item) {
+    const thumb = document.createElement("div");
+    thumb.className = "dp-memory-thumb";
+
+    if (item.fileType === "image") {
+      const img = document.createElement("img");
+      img.src = `file://${item.filepath}`;
+      img.draggable = false;
+      img.alt = item.displayName || fileNameFromPath(item.filepath);
+      thumb.appendChild(img);
+      return thumb;
+    }
+
+    if (item.fileType === "text") {
+      thumb.textContent = "TXT";
+      return thumb;
+    }
+
+    thumb.textContent = "FILE";
+    return thumb;
+  }
+
+  function renderItems(files) {
+    memoryList.innerHTML = "";
+
+    const existingIds = new Set(files.map((item) => item.id));
+    selectedIds.forEach((id) => {
+      if (!existingIds.has(id)) selectedIds.delete(id);
+    });
+
+    files.forEach((item, index) => {
+      const row = document.createElement("div");
+      row.className = "dp-memory-item";
+      row.draggable = true;
+      if (selectedIds.has(item.id)) {
+        row.classList.add("dp-memory-selected");
+      }
+
+      const thumb = createThumb(item);
+
+      const meta = document.createElement("div");
+      meta.className = "dp-memory-meta";
+
+      const name = document.createElement("div");
+      name.className = "dp-memory-name";
+      name.textContent = item.displayName || fileNameFromPath(item.filepath);
+
+      const preview = document.createElement("div");
+      preview.className = "dp-memory-preview";
+      preview.textContent = previewLabel(item);
+
+      meta.appendChild(name);
+      meta.appendChild(preview);
+
+      const actions = document.createElement("div");
+      actions.className = "dp-memory-actions";
+
+      const dragBtn = document.createElement("button");
+      dragBtn.className = "dp-mini-btn";
+      dragBtn.textContent = "Drag";
+      dragBtn.addEventListener("click", () => {
+        showToast("Drag from the card to drop externally");
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "dp-mini-btn";
+      delBtn.textContent = "Del";
+      delBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const next = window.droppoint.getFiles().filter((_, i) => i !== index);
+        window.droppoint.replaceItems(next);
+      });
+
+      actions.appendChild(dragBtn);
+      actions.appendChild(delBtn);
+
+      row.appendChild(thumb);
+      row.appendChild(meta);
+      row.appendChild(actions);
+
+      row.addEventListener("dragstart", (event) => {
+        event.preventDefault();
+        const allItems = window.droppoint.getFiles();
+        const intended = selectedIds.has(item.id)
+          ? allItems.filter((entry) => selectedIds.has(entry.id))
+          : [item];
+
+        if (!intended.length) return;
+        window.droppoint.startDragOut(intended);
+      });
+
+      row.addEventListener("dblclick", async () => {
+        const result = await window.electron.revealInFolder(item.filepath);
+        if (!result || !result.ok) {
+          row.classList.add("dp-memory-missing");
+          showToast("File no longer exists");
+        }
+      });
+
+      row.addEventListener("click", (event) => {
+        if (!item.id) return;
+        if (event.ctrlKey || event.metaKey) {
+          if (selectedIds.has(item.id)) {
+            selectedIds.delete(item.id);
+          } else {
+            selectedIds.add(item.id);
+          }
+        } else {
+          selectedIds = new Set([item.id]);
+        }
+        renderItems(window.droppoint.getFiles());
+      });
+
+      memoryList.appendChild(row);
+    });
+
+    dropHint.textContent = files.length
+      ? "Keep dropping more files or paste with Ctrl+V"
+      : "Drop files or paste text/images with Ctrl+V";
+  }
+
+  function resizeWidget() {
+    const count = window.droppoint.getFiles().length;
+    const estimatedHeight = WIDGET_MIN_HEIGHT + Math.min(count, 10) * 56;
+    const maxHeight = Math.floor(window.screen.availHeight * WIDGET_MAX_SCREEN_RATIO);
+    const targetHeight = Math.min(estimatedHeight, maxHeight);
+    window.electron.resizeWindow(WIDGET_WIDTH, Math.max(WIDGET_MIN_HEIGHT, targetHeight));
+  }
+
+  function syncRendererView(files) {
+    renderItems(files);
+    updateSaveBtnState();
+    resizeWidget();
+  }
+
+  async function refreshZones() {
+    zones = await window.electron.getGalleryZones();
+    updateGalleryBtnState();
+  }
+
+  async function persistZones() {
+    await window.electron.setGalleryZones(zones);
+    updateGalleryBtnState();
+  }
+
+  async function saveCurrentZone() {
+    const items = window.droppoint.getFiles();
+    const zone = {
+      id: loadedZoneId || Date.now(),
+      name: zoneName.textContent || "Drop Zone",
+      files: items,
+      savedAt: new Date().toISOString(),
+    };
+
+    const existingIndex = zones.findIndex((entry) => entry.id === zone.id);
+    if (existingIndex === -1) {
+      zones.unshift(zone);
+      loadedZoneId = zone.id;
+      showToast("Zone saved");
+    } else {
+      zones[existingIndex] = zone;
+      showToast("Zone updated");
+    }
+
+    await persistZones();
+  }
+
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleString();
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function createZoneCard(zone) {
+    const card = document.createElement("div");
+    card.className = "dp-zone-card";
+
+    const header = document.createElement("div");
+    header.className = "dp-zone-card-header";
+
+    const name = document.createElement("div");
+    name.className = "dp-zone-card-name";
+    name.textContent = zone.name;
+
+    const meta = document.createElement("div");
+    meta.className = "dp-zone-card-meta";
+    meta.textContent = `${(zone.files || []).length} item(s)`;
+
+    const actions = document.createElement("div");
+    actions.className = "dp-zone-card-actions";
+
+    const loadBtn = document.createElement("button");
+    loadBtn.className = "dp-card-btn dp-card-btn-load";
+    loadBtn.textContent = "Load";
+    loadBtn.addEventListener("click", () => {
+      loadedZoneId = zone.id;
+      saveZoneName(zone.name);
+      window.droppoint.replaceItems(zone.files || []);
+      overlay.classList.remove("dp-open");
+      showToast(`Loaded: ${zone.name}`);
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "dp-card-btn dp-card-btn-delete";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", async () => {
+      zones = zones.filter((entry) => entry.id !== zone.id);
+      if (loadedZoneId === zone.id) loadedZoneId = null;
+      await persistZones();
+      renderGallery();
+    });
+
+    actions.appendChild(loadBtn);
+    actions.appendChild(delBtn);
+
+    header.appendChild(name);
+    header.appendChild(meta);
+    header.appendChild(actions);
+
+    card.appendChild(header);
+
+    const filesWrap = document.createElement("div");
+    filesWrap.className = "dp-zone-files";
+    (zone.files || []).slice(0, 8).forEach((item) => {
+      const chip = document.createElement("div");
+      chip.className = "dp-file-chip";
+      chip.title = item.displayName || fileNameFromPath(item.filepath);
+      chip.innerHTML = `<span class="dp-file-chip-icon">${item.fileType === "image" ? "IMG" : item.fileType === "text" ? "TXT" : "FILE"}</span><span class="dp-file-chip-name">${item.displayName || fileNameFromPath(item.filepath)}</span>`;
+      filesWrap.appendChild(chip);
+    });
+
+    card.appendChild(filesWrap);
+
+    const date = document.createElement("div");
+    date.className = "dp-zone-card-date";
+    date.textContent = `Saved ${formatDate(zone.savedAt)}`;
+    card.appendChild(date);
+
+    return card;
+  }
+
+  function renderGallery() {
+    galleryList.innerHTML = "";
+    if (!zones.length) {
+      galleryEmpty.style.display = "";
+      galleryList.style.display = "none";
+      return;
+    }
+
+    galleryEmpty.style.display = "none";
+    galleryList.style.display = "";
+    zones.forEach((zone) => galleryList.appendChild(createZoneCard(zone)));
+  }
+
+  async function handlePaste(event) {
+    const clipboard = event.clipboardData;
+    if (!clipboard) return;
+
+    const imageItem = Array.from(clipboard.items || []).find(
+      (entry) => entry.kind === "file" && entry.type.startsWith("image/")
+    );
+
+    if (imageItem) {
+      event.preventDefault();
+      const imageFile = imageItem.getAsFile();
+      if (!imageFile) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const stored = await window.electron.saveClipboardImage(reader.result);
+        window.droppoint.addItems([stored]);
+        showToast("Image pasted");
+      };
+      reader.readAsDataURL(imageFile);
+      return;
+    }
+
+    const text = clipboard.getData("text/plain");
+    if (text) {
+      event.preventDefault();
+      const stored = await window.electron.saveClipboardText(text);
+      stored.displayName = `note-${new Date().toISOString().slice(11, 19).replace(/:/g, "")}.txt`;
+      window.droppoint.addItems([stored]);
+      showToast("Text pasted");
+    }
+  }
+
+  function setupEvents() {
+    if (uploadArea) uploadArea.style.display = "none";
+    if (dragArea) dragArea.style.display = "none";
+
+    const startRename = () => {
+      zoneName.style.display = "none";
+      renameBtn.style.display = "none";
+      zoneInput.style.display = "block";
+      zoneInput.focus();
+      zoneInput.select();
+    };
+
+    renameBtn.addEventListener("click", startRename);
+
+    zoneInput.addEventListener("blur", () => {
+      saveZoneName(zoneInput.value);
+      zoneInput.style.display = "none";
+      zoneName.style.display = "";
+      renameBtn.style.display = "";
+    });
+
+    zoneInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") zoneInput.blur();
+      if (event.key === "Escape") {
+        zoneInput.value = zoneName.textContent;
+        zoneInput.blur();
+      }
+    });
+
+    saveBtn.addEventListener("click", saveCurrentZone);
+
+    newBtn.addEventListener("click", () => {
+      window.electron.spawnInstance();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      window.droppoint.clearItems();
+      selectedIds.clear();
+      loadedZoneId = null;
+      showToast("Zone cleared");
+    });
+
+    closeBtn.addEventListener("click", () => {
+      window.close();
+    });
+
+    galleryBtn.addEventListener("click", () => {
+      renderGallery();
+      overlay.classList.add("dp-open");
+      window.electron.resizeWindow(GALLERY_W, GALLERY_H);
+    });
+
+    galClose.addEventListener("click", () => {
+      overlay.classList.remove("dp-open");
+      resizeWidget();
+    });
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        overlay.classList.remove("dp-open");
+        resizeWidget();
+      }
+    });
+
+    document.addEventListener("paste", handlePaste);
+
+    dragSelected.addEventListener("dragstart", (event) => {
+      event.preventDefault();
+      const allItems = window.droppoint.getFiles();
+      const selectedItems = allItems.filter((item) => selectedIds.has(item.id));
+      if (!selectedItems.length) {
+        showToast("Select one or more items first");
+        return;
+      }
+      window.droppoint.startDragOut(selectedItems);
+    });
+
+    dragAll.addEventListener("dragstart", (event) => {
+      event.preventDefault();
+      const allItems = window.droppoint.getFiles();
+      if (!allItems.length) {
+        showToast("No valid references to drag");
+        return;
+      }
+      window.droppoint.startDragOut(allItems);
+    });
+
+    clearMissing.addEventListener("click", async () => {
+      const allItems = window.droppoint.getFiles();
+      const kept = [];
+      for (const item of allItems) {
+        const exists = await window.electron.fileExists(item.filepath);
+        if (exists) kept.push(item);
+      }
+      window.droppoint.replaceItems(kept);
+      showToast("Missing references cleared");
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Delete" && event.key !== "Backspace") return;
+      const allItems = window.droppoint.getFiles();
+      const kept = allItems.filter((item) => !selectedIds.has(item.id));
+      if (kept.length === allItems.length) return;
+      window.droppoint.replaceItems(kept);
+      selectedIds.clear();
+    });
+
+    window.droppoint.subscribe((files) => {
+      syncRendererView(files);
+    });
+  }
+
+  async function init() {
+    loadZoneName();
+    await refreshZones();
+    setupEvents();
+    syncRendererView(window.droppoint.getFiles());
+  }
+
+  init();
+})();
+</script>
 
 </html>

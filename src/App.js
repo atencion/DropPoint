@@ -1,4 +1,6 @@
-const { app, BrowserWindow, nativeImage } = require("electron");
+const { app, BrowserWindow, nativeImage, ipcMain, globalShortcut } = require("electron");
+const fs = require("fs");
+const path = require("path");
 const { autoUpdater } = require("electron-updater");
 const Store = require("electron-store");
 const configOptions = require("./configOptions");
@@ -10,6 +12,17 @@ const { setTray } = require("./Tray");
 
 const config = new Store(configOptions);
 let splashScreen;
+
+try {
+  const sessionDataPath = path.join(app.getPath("userData"), "sessionData");
+  const diskCachePath = path.join(sessionDataPath, "Cache");
+  fs.mkdirSync(diskCachePath, { recursive: true });
+  app.setPath("sessionData", sessionDataPath);
+  app.commandLine.appendSwitch("disk-cache-dir", diskCachePath);
+  app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
+} catch (error) {
+  console.warn("[DropPoint] Failed to configure session cache path", error);
+}
 
 app
   .on("ready", () => {
@@ -32,6 +45,11 @@ app
 
     setTray();
     setShortcut();
+
+    ipcMain.on("spawn-instance", () => {
+      const instance = new Instance();
+      instance.createNewWindow();
+    });
 
     if (BrowserWindow.getAllWindows.length === 0 && config.get("spawnOnLaunch")) {
       const instance = new Instance();

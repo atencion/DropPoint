@@ -23,6 +23,18 @@ contextBridge.exposeInMainWorld("electron", {
   applySettingsInConfig: (newConfig) => {
     ipcRenderer.send("applySettings", newConfig)
   },
+  resizeWindow: (width, height) => {
+    ipcRenderer.send("resize-window", { width, height });
+  },
+  getGalleryZones: () => ipcRenderer.invoke("gallery:get-zones"),
+  setGalleryZones: (zones) => ipcRenderer.invoke("gallery:set-zones", zones),
+  saveClipboardText: (text) => ipcRenderer.invoke("vault:save-text", { text }),
+  saveClipboardImage: (dataUrl) => ipcRenderer.invoke("vault:save-image", { dataUrl }),
+  fileExists: (filepath) => ipcRenderer.invoke("fs:file-exists", { filepath }),
+  spawnInstance: () => ipcRenderer.send("spawn-instance"),
+  revealInFolder: (filepath) => ipcRenderer.invoke("fs:reveal-in-folder", { filepath }),
+  getClipboardHistory: () => ipcRenderer.invoke("clipboard:get-history"),
+  onClipboardItem: (callback) => ipcRenderer.on("clipboard:item", (event, item) => callback(item)),
 });
 
 // For settings renderer
