@@ -333,6 +333,16 @@
     background: rgba(8,145,178,0.22);
   }
 
+  .dp-btn-clipboard {
+    background: rgba(87, 83, 221, 0.1);
+    color: #524ec6;
+  }
+
+  .dp-btn-clipboard:hover {
+    background: rgba(87, 83, 221, 0.18);
+    color: #423eac;
+  }
+
   .dp-btn-new {
     background: rgba(5,10,15,0.08);
     color: #050a0fa0;
@@ -667,10 +677,11 @@
   #dp-gallery-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 26px 28px 20px;
     border-bottom: 1px solid rgba(5,10,15,0.08);
     flex-shrink: 0;
+    gap: 12px;
   }
 
   #dp-gallery-title {
@@ -705,6 +716,38 @@
     color: #e05252;
   }
 
+  #dp-gallery-controls {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  #dp-gallery-breadcrumbs {
+    padding: 8px 22px 0;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .dp-crumb {
+    border: 1px solid rgba(5,10,15,0.12);
+    border-radius: 999px;
+    background: rgba(5,10,15,0.04);
+    color: #3e4a59;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+
+  .dp-crumb.dp-crumb-active {
+    background: rgba(8,145,178,0.14);
+    border-color: rgba(8,145,178,0.35);
+    color: rgb(8,145,178);
+  }
+
   #dp-gallery-empty {
     display: flex;
     flex-direction: column;
@@ -732,6 +775,12 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+  }
+
+  #dp-gallery-list.dp-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
   }
 
   #dp-gallery-list::-webkit-scrollbar {
@@ -889,6 +938,123 @@
     padding: 4px 10px;
     border-radius: 5px;
   }
+
+  #dp-clipboard-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    background: rgba(6, 10, 16, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-app-region: no-drag;
+  }
+
+  #dp-clipboard-overlay.dp-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #dp-clipboard-panel {
+    width: min(92vw, 560px);
+    max-height: 88vh;
+    background: rgba(246, 249, 253, 0.98);
+    border: 1px solid rgba(5,10,15,0.1);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #dp-clipboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(5,10,15,0.08);
+  }
+
+  #dp-clipboard-title {
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #243140;
+  }
+
+  #dp-clipboard-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(5,10,15,0.08);
+    color: #4f5c6c;
+    cursor: pointer;
+  }
+
+  #dp-clipboard-list {
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dp-clip-item {
+    border: 1px solid rgba(5,10,15,0.1);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.85);
+    padding: 8px;
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .dp-clip-thumb {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(5,10,15,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #4f5c6c;
+  }
+
+  .dp-clip-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .dp-clip-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .dp-clip-name {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #1f2b39;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dp-clip-preview {
+    font-size: 0.6rem;
+    color: #6b7889;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 </style>
 
 <!-- ══════════════════ EXISTING DROPPOINT RENDERER ══════════════════ -->
@@ -900,6 +1066,7 @@
   "use strict";
 
   const ZONE_NAME_KEY = "droppoint_zone_name";
+  const ROOT_FOLDER_ID = "root";
 
   const zoneName = document.getElementById("dp-zone-name");
   const renameBtn = document.getElementById("dp-rename-btn");
@@ -907,12 +1074,20 @@
   const newBtn = document.getElementById("dp-new-btn");
   const saveBtn = document.getElementById("dp-save-btn");
   const galleryBtn = document.getElementById("dp-gallery-btn");
+  const clipboardBtn = document.getElementById("dp-clipboard-btn");
   const clearBtn = document.getElementById("dp-clear-btn");
   const closeBtn = document.getElementById("dp-close-btn");
   const overlay = document.getElementById("dp-gallery-overlay");
   const galleryList = document.getElementById("dp-gallery-list");
   const galleryEmpty = document.getElementById("dp-gallery-empty");
   const galClose = document.getElementById("dp-gallery-close");
+  const galleryUpBtn = document.getElementById("dp-gallery-up");
+  const galleryNewFolderBtn = document.getElementById("dp-gallery-new-folder");
+  const galleryViewToggleBtn = document.getElementById("dp-gallery-view-toggle");
+  const galleryBreadcrumbs = document.getElementById("dp-gallery-breadcrumbs");
+  const clipboardOverlay = document.getElementById("dp-clipboard-overlay");
+  const clipboardCloseBtn = document.getElementById("dp-clipboard-close");
+  const clipboardList = document.getElementById("dp-clipboard-list");
   const toast = document.getElementById("dp-toast");
   const memoryList = document.getElementById("dp-memory-list");
   const dropHint = document.getElementById("dp-drop-hint");
@@ -930,6 +1105,9 @@
 
   let loadedZoneId = null;
   let zones = [];
+  let clipboardItems = [];
+  let galleryView = "grid";
+  let currentFolderId = ROOT_FOLDER_ID;
   let toastTimer = null;
   let selectedIds = new Set();
 
@@ -954,7 +1132,8 @@
   }
 
   function updateGalleryBtnState() {
-    galleryBtn.classList.toggle("dp-has-saved", zones.length > 0);
+    const hasZones = zones.some((entry) => entry.type === "zone");
+    galleryBtn.classList.toggle("dp-has-saved", hasZones);
   }
 
   function showToast(message) {
@@ -972,6 +1151,57 @@
     }
     if (item.fileType === "image") return item.source === "vault" ? "Pasted image" : "Image reference";
     return item.source === "vault" ? "Stored in DropPoint" : "Linked reference";
+  }
+
+  function ensureZonesModel(rawZones) {
+    const normalized = (rawZones || []).map((entry) => {
+      if (entry && entry.type) {
+        return {
+          ...entry,
+          parentId: entry.parentId || ROOT_FOLDER_ID,
+        };
+      }
+
+      return {
+        ...entry,
+        type: "zone",
+        parentId: ROOT_FOLDER_ID,
+      };
+    });
+
+    return normalized;
+  }
+
+  function getFolderById(folderId) {
+    if (folderId === ROOT_FOLDER_ID) {
+      return { id: ROOT_FOLDER_ID, type: "folder", name: "Root", parentId: null };
+    }
+    return zones.find((entry) => entry.id === folderId && entry.type === "folder");
+  }
+
+  function getFolderPath(folderId) {
+    const path = [];
+    let cursor = folderId;
+    while (cursor && cursor !== ROOT_FOLDER_ID) {
+      const folder = getFolderById(cursor);
+      if (!folder) break;
+      path.unshift(folder);
+      cursor = folder.parentId;
+    }
+    return [{ id: ROOT_FOLDER_ID, name: "Root" }, ...path];
+  }
+
+  function getEntriesInCurrentFolder() {
+    const entries = zones.filter((entry) => (entry.parentId || ROOT_FOLDER_ID) === currentFolderId);
+    const folders = entries.filter((entry) => entry.type === "folder").sort((a, b) => a.name.localeCompare(b.name));
+    const zoneEntries = entries
+      .filter((entry) => entry.type === "zone")
+      .sort((a, b) => (b.savedAt || "").localeCompare(a.savedAt || ""));
+    return [...folders, ...zoneEntries];
+  }
+
+  function hasNestedEntries(folderId) {
+    return zones.some((entry) => (entry.parentId || ROOT_FOLDER_ID) === folderId);
   }
 
   function createThumb(item) {
@@ -1110,7 +1340,7 @@
   }
 
   async function refreshZones() {
-    zones = await window.electron.getGalleryZones();
+    zones = ensureZonesModel(await window.electron.getGalleryZones());
     updateGalleryBtnState();
   }
 
@@ -1123,8 +1353,10 @@
     const items = window.droppoint.getFiles();
     const zone = {
       id: loadedZoneId || Date.now(),
+      type: "zone",
       name: zoneName.textContent || "Drop Zone",
       files: items,
+      parentId: currentFolderId,
       savedAt: new Date().toISOString(),
     };
 
@@ -1175,6 +1407,7 @@
       saveZoneName(zone.name);
       window.droppoint.replaceItems(zone.files || []);
       overlay.classList.remove("dp-open");
+      galleryList.classList.remove("dp-gallery-grid");
       showToast(`Loaded: ${zone.name}`);
     });
 
@@ -1217,9 +1450,80 @@
     return card;
   }
 
+  function createFolderCard(folder) {
+    const card = document.createElement("div");
+    card.className = "dp-zone-card dp-folder-card";
+
+    const header = document.createElement("div");
+    header.className = "dp-zone-card-header";
+
+    const name = document.createElement("div");
+    name.className = "dp-zone-card-name";
+    name.textContent = folder.name;
+
+    const meta = document.createElement("div");
+    meta.className = "dp-folder-meta";
+    meta.textContent = "Folder";
+
+    const actions = document.createElement("div");
+    actions.className = "dp-zone-card-actions";
+
+    const openBtn = document.createElement("button");
+    openBtn.className = "dp-card-btn dp-card-btn-load";
+    openBtn.textContent = "Open";
+    openBtn.addEventListener("click", () => {
+      currentFolderId = folder.id;
+      renderGallery();
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "dp-card-btn dp-card-btn-delete";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", async () => {
+      if (hasNestedEntries(folder.id)) {
+        showToast("Folder not empty");
+        return;
+      }
+      zones = zones.filter((entry) => entry.id !== folder.id);
+      await persistZones();
+      renderGallery();
+    });
+
+    actions.appendChild(openBtn);
+    actions.appendChild(delBtn);
+    header.appendChild(name);
+    header.appendChild(meta);
+    header.appendChild(actions);
+    card.appendChild(header);
+
+    return card;
+  }
+
+  function renderBreadcrumbs() {
+    galleryBreadcrumbs.innerHTML = "";
+    const crumbs = getFolderPath(currentFolderId);
+    crumbs.forEach((crumb) => {
+      const btn = document.createElement("button");
+      btn.className = "dp-crumb";
+      if (crumb.id === currentFolderId) {
+        btn.classList.add("dp-crumb-active");
+      }
+      btn.textContent = crumb.name;
+      btn.addEventListener("click", () => {
+        currentFolderId = crumb.id;
+        renderGallery();
+      });
+      galleryBreadcrumbs.appendChild(btn);
+    });
+  }
+
   function renderGallery() {
+    renderBreadcrumbs();
     galleryList.innerHTML = "";
-    if (!zones.length) {
+    galleryList.classList.toggle("dp-gallery-grid", galleryView === "grid");
+
+    const entries = getEntriesInCurrentFolder();
+    if (!entries.length) {
       galleryEmpty.style.display = "";
       galleryList.style.display = "none";
       return;
@@ -1227,7 +1531,68 @@
 
     galleryEmpty.style.display = "none";
     galleryList.style.display = "";
-    zones.forEach((zone) => galleryList.appendChild(createZoneCard(zone)));
+    entries.forEach((entry) => {
+      if (entry.type === "folder") {
+        galleryList.appendChild(createFolderCard(entry));
+      } else {
+        galleryList.appendChild(createZoneCard(entry));
+      }
+    });
+  }
+
+  function createClipboardRow(item) {
+    const row = document.createElement("div");
+    row.className = "dp-clip-item";
+    row.draggable = true;
+
+    const thumb = document.createElement("div");
+    thumb.className = "dp-clip-thumb";
+    if (item.fileType === "image") {
+      const img = document.createElement("img");
+      img.src = `file://${item.filepath}`;
+      thumb.appendChild(img);
+    } else {
+      thumb.textContent = "TXT";
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "dp-clip-meta";
+    const name = document.createElement("div");
+    name.className = "dp-clip-name";
+    name.textContent = item.displayName || fileNameFromPath(item.filepath);
+    const preview = document.createElement("div");
+    preview.className = "dp-clip-preview";
+    preview.textContent = item.previewText || (item.fileType === "image" ? "Clipboard image" : "Clipboard text");
+    meta.appendChild(name);
+    meta.appendChild(preview);
+
+    const actions = document.createElement("div");
+    actions.className = "dp-zone-card-actions";
+    const addBtn = document.createElement("button");
+    addBtn.className = "dp-card-btn dp-card-btn-load";
+    addBtn.textContent = "Add";
+    addBtn.addEventListener("click", () => {
+      window.droppoint.addItems([item]);
+      showToast("Added from clipboard");
+    });
+    actions.appendChild(addBtn);
+
+    row.addEventListener("dragstart", (event) => {
+      event.preventDefault();
+      window.droppoint.startDragOut([item]);
+    });
+
+    row.appendChild(thumb);
+    row.appendChild(meta);
+    row.appendChild(actions);
+    return row;
+  }
+
+  function renderClipboardFlow() {
+    clipboardList.innerHTML = "";
+    clipboardItems.forEach((item) => {
+      clipboardList.appendChild(createClipboardRow(item));
+    });
   }
 
   async function handlePaste(event) {
@@ -1314,8 +1679,19 @@
       window.electron.resizeWindow(GALLERY_W, GALLERY_H);
     });
 
+    clipboardBtn.addEventListener("click", () => {
+      renderClipboardFlow();
+      clipboardOverlay.classList.add("dp-open");
+      window.electron.resizeWindow(620, 640);
+    });
+
     galClose.addEventListener("click", () => {
       overlay.classList.remove("dp-open");
+      resizeWidget();
+    });
+
+    clipboardCloseBtn.addEventListener("click", () => {
+      clipboardOverlay.classList.remove("dp-open");
       resizeWidget();
     });
 
@@ -1324,6 +1700,43 @@
         overlay.classList.remove("dp-open");
         resizeWidget();
       }
+    });
+
+    clipboardOverlay.addEventListener("click", (event) => {
+      if (event.target === clipboardOverlay) {
+        clipboardOverlay.classList.remove("dp-open");
+        resizeWidget();
+      }
+    });
+
+    galleryViewToggleBtn.addEventListener("click", () => {
+      galleryView = galleryView === "grid" ? "list" : "grid";
+      galleryViewToggleBtn.textContent = galleryView === "grid" ? "Grid" : "List";
+      renderGallery();
+    });
+
+    galleryUpBtn.addEventListener("click", () => {
+      const folder = getFolderById(currentFolderId);
+      if (!folder || !folder.parentId) {
+        currentFolderId = ROOT_FOLDER_ID;
+      } else {
+        currentFolderId = folder.parentId;
+      }
+      renderGallery();
+    });
+
+    galleryNewFolderBtn.addEventListener("click", async () => {
+      const name = window.prompt("Folder name", "New Folder");
+      if (!name) return;
+      zones.unshift({
+        id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: "folder",
+        name: name.trim() || "New Folder",
+        parentId: currentFolderId,
+        createdAt: new Date().toISOString(),
+      });
+      await persistZones();
+      renderGallery();
     });
 
     document.addEventListener("paste", handlePaste);
@@ -1372,11 +1785,23 @@
     window.droppoint.subscribe((files) => {
       syncRendererView(files);
     });
+
+    window.electron.onClipboardItem((item) => {
+      if (!item) return;
+      const exists = clipboardItems.some((entry) => entry.signature === item.signature);
+      if (exists) return;
+      clipboardItems.unshift(item);
+      clipboardItems = clipboardItems.slice(0, 400);
+      if (clipboardOverlay.classList.contains("dp-open")) {
+        renderClipboardFlow();
+      }
+    });
   }
 
   async function init() {
     loadZoneName();
     await refreshZones();
+    clipboardItems = await window.electron.getClipboardHistory();
     setupEvents();
     syncRendererView(window.droppoint.getFiles());
   }
