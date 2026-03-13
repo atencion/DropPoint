@@ -2,6 +2,7 @@ const instanceId = parseInt(window.location.search.slice(4), 10);
 
 let filelist = [];
 const subscribers = new Set();
+let currentClipFolderId = "clip-root";
 
 const holder = document.getElementById("droppoint");
 
@@ -49,6 +50,7 @@ function addItems(items) {
       source: raw.source || "reference",
       createdAt: raw.createdAt || new Date().toISOString(),
       previewText: raw.previewText || "",
+      parentClipFolderId: raw.parentClipFolderId || currentClipFolderId,
     };
 
     filelist.push(item);
@@ -132,6 +134,9 @@ window.droppoint = {
   replaceItems,
   clearItems,
   startDragOut,
+  setCurrentClipFolderId: (folderId) => {
+    currentClipFolderId = folderId || "clip-root";
+  },
   subscribe: (callback) => {
     subscribers.add(callback);
     callback(filelist.map((item) => ({ ...item })));

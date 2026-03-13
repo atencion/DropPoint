@@ -91,10 +91,14 @@
         Drag Your <num></num> File(s) Out
       </div>
       <div id="dp-memory-actions">
+        <button id="dp-clip-up" class="dp-memory-clear-btn" style="margin-left:0">Up</button>
+        <button id="dp-clip-new-folder" class="dp-memory-clear-btn" style="margin-left:0">New folder</button>
+        <button id="dp-clip-view-toggle" class="dp-memory-clear-btn" style="margin-left:0">Grid</button>
         <div id="dp-drag-selected" class="dp-memory-drag-pill" draggable="true">Drag selected</div>
         <div id="dp-drag-all" class="dp-memory-drag-pill" draggable="true">Drag all</div>
         <button id="dp-clear-missing" class="dp-memory-clear-btn">Clear missing</button>
       </div>
+      <div id="dp-clip-breadcrumbs"></div>
       <div id="dp-memory-list"></div>
       <div id="dp-drop-hint">Drop files or paste text/images with Ctrl+V</div>
     </div>
@@ -472,11 +476,49 @@
     -webkit-app-region: no-drag;
   }
 
+  #dp-memory-list.dp-clip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+  }
+
   #dp-memory-actions {
     display: flex;
     gap: 6px;
     align-items: center;
     -webkit-app-region: no-drag;
+    flex-wrap: wrap;
+  }
+
+  #dp-clip-breadcrumbs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    -webkit-app-region: no-drag;
+  }
+
+  .dp-clip-crumb {
+    border: 1px solid rgba(5, 10, 15, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.65);
+    color: #344152;
+    font-size: 0.56rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+
+  .dp-clip-crumb.dp-clip-crumb-active {
+    background: rgba(8,145,178,0.13);
+    border-color: rgba(8,145,178,0.35);
+    color: rgb(8,145,178);
+  }
+
+  .dp-memory-folder {
+    border: 1px solid rgba(217, 119, 6, 0.3);
+    background: rgba(217, 119, 6, 0.08);
   }
 
   .dp-memory-drag-pill {
@@ -1159,8 +1201,9 @@
 (function () {
   "use strict";
 
-  const ZONE_NAME_KEY = "droppoint_zone_name";
   const ROOT_FOLDER_ID = "root";
+  const CLIP_ROOT_ID = "clip-root";
+  const NAME_COUNTER_KEY = "droppoint_zone_name_seq";
 
   const zoneName = document.getElementById("dp-zone-name");
   const renameRow = document.getElementById("dp-rename-row");
@@ -1192,6 +1235,10 @@
   const dropHint = document.getElementById("dp-drop-hint");
   const dragSelected = document.getElementById("dp-drag-selected");
   const dragAll = document.getElementById("dp-drag-all");
+  const clipUpBtn = document.getElementById("dp-clip-up");
+  const clipNewFolderBtn = document.getElementById("dp-clip-new-folder");
+  const clipViewToggleBtn = document.getElementById("dp-clip-view-toggle");
+  const clipBreadcrumbs = document.getElementById("dp-clip-breadcrumbs");
   const clearMissing = document.getElementById("dp-clear-missing");
   const uploadArea = document.querySelector(".upload");
   const dragArea = document.getElementById("drag");
@@ -1207,6 +1254,10 @@
   let clipboardItems = [];
   let galleryView = "grid";
   let currentFolderId = ROOT_FOLDER_ID;
+  let currentClipFolderId = CLIP_ROOT_ID;
+  let clipFolders = [];
+  let clipView = "list";
+  let autosaveTimer = null;
   let toastTimer = null;
   let selectedIds = new Set();
 
@@ -1216,6 +1267,51 @@
 
   function getItemType(item) {
     return item.fileType || item.type || "file";
+  }
+
+  function nextZoneName() {
+    const current = Number.parseInt(localStorage.getItem(NAME_COUNTER_KEY) || "0", 10) || 0;
+    const next = current + 1;
+    localStorage.setItem(NAME_COUNTER_KEY, String(next));
+    return `Zone ${next}`;
+  }
+
+  function resetClipFoldersState() {
+    clipFolders = [{ id: CLIP_ROOT_ID, name: "Root", parentId: null }];
+    setCurrentClipFolder(CLIP_ROOT_ID);
+    selectedIds.clear();
+  }
+
+  function getClipFolderById(folderId) {
+    return clipFolders.find((folder) => folder.id === folderId);
+  }
+
+  function setCurrentClipFolder(folderId) {
+    currentClipFolderId = folderId || CLIP_ROOT_ID;
+    if (window.droppoint && typeof window.droppoint.setCurrentClipFolderId === "function") {
+      window.droppoint.setCurrentClipFolderId(currentClipFolderId);
+    }
+  }
+
+  function clipFolderPath(folderId) {
+    const path = [];
+    let cursor = folderId;
+    while (cursor && cursor !== CLIP_ROOT_ID) {
+      const folder = getClipFolderById(cursor);
+      if (!folder) break;
+      path.unshift(folder);
+      cursor = folder.parentId;
+    }
+    return [{ id: CLIP_ROOT_ID, name: "Root" }, ...path];
+  }
+
+  function scheduleAutoSave() {
+    if (autosaveTimer) {
+      clearTimeout(autosaveTimer);
+    }
+    autosaveTimer = setTimeout(() => {
+      saveCurrentZone(true);
+    }, 900);
   }
 
   async function openTextPreview(item, title) {
@@ -1244,11 +1340,10 @@
     const finalName = (name || "").trim() || "Drop Zone";
     zoneName.textContent = finalName;
     zoneInput.value = finalName;
-    localStorage.setItem(ZONE_NAME_KEY, finalName);
   }
 
   function loadZoneName() {
-    saveZoneName(localStorage.getItem(ZONE_NAME_KEY) || "Drop Zone");
+    saveZoneName(nextZoneName());
   }
 
   function updateSaveBtnState() {
@@ -1285,6 +1380,12 @@
         return {
           ...entry,
           parentId: entry.parentId || ROOT_FOLDER_ID,
+          clipFolders:
+            entry.type === "zone"
+              ? Array.isArray(entry.clipFolders) && entry.clipFolders.length
+                ? entry.clipFolders
+                : [{ id: CLIP_ROOT_ID, name: "Root", parentId: null }]
+              : entry.clipFolders,
         };
       }
 
@@ -1292,6 +1393,7 @@
         ...entry,
         type: "zone",
         parentId: ROOT_FOLDER_ID,
+        clipFolders: [{ id: CLIP_ROOT_ID, name: "Root", parentId: null }],
       };
     });
 
@@ -1365,15 +1467,77 @@
     });
   }
 
+  function renderClipBreadcrumbs() {
+    clipBreadcrumbs.innerHTML = "";
+    const crumbs = clipFolderPath(currentClipFolderId);
+    crumbs.forEach((crumb) => {
+      const node = document.createElement("button");
+      node.className = "dp-clip-crumb";
+      if (crumb.id === currentClipFolderId) {
+        node.classList.add("dp-clip-crumb-active");
+      }
+      node.textContent = crumb.name;
+      node.addEventListener("click", () => {
+        setCurrentClipFolder(crumb.id);
+        renderItems(window.droppoint.getFiles());
+      });
+      node.addEventListener("dragover", (event) => {
+        event.preventDefault();
+      });
+      node.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const raw = event.dataTransfer.getData("application/x-dp-item-ids");
+        if (!raw) return;
+        const ids = JSON.parse(raw);
+        const next = window.droppoint.getFiles().map((entry) =>
+          ids.includes(entry.id) ? { ...entry, parentClipFolderId: crumb.id } : entry
+        );
+        window.droppoint.replaceItems(next);
+        scheduleAutoSave();
+      });
+      clipBreadcrumbs.appendChild(node);
+    });
+  }
+
   function renderItems(files) {
     memoryList.innerHTML = "";
+    memoryList.classList.toggle("dp-clip-grid", clipView === "grid");
+    renderClipBreadcrumbs();
 
     const existingIds = new Set(files.map((item) => item.id));
     selectedIds.forEach((id) => {
       if (!existingIds.has(id)) selectedIds.delete(id);
     });
 
-    files.forEach((item, index) => {
+    const childFolders = clipFolders.filter((folder) => folder.parentId === currentClipFolderId);
+    childFolders.forEach((folder) => {
+      const row = document.createElement("div");
+      row.className = "dp-memory-item dp-memory-folder";
+      row.innerHTML = `<div class="dp-memory-thumb">DIR</div><div class="dp-memory-meta"><div class="dp-memory-name">${folder.name}</div><div class="dp-memory-preview">Folder</div></div><div class="dp-memory-actions"></div>`;
+      row.addEventListener("dblclick", () => {
+        setCurrentClipFolder(folder.id);
+        renderItems(window.droppoint.getFiles());
+      });
+      row.addEventListener("dragover", (event) => {
+        event.preventDefault();
+      });
+      row.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const raw = event.dataTransfer.getData("application/x-dp-item-ids");
+        if (!raw) return;
+        const ids = JSON.parse(raw);
+        const next = window.droppoint.getFiles().map((entry) =>
+          ids.includes(entry.id) ? { ...entry, parentClipFolderId: folder.id } : entry
+        );
+        window.droppoint.replaceItems(next);
+        scheduleAutoSave();
+      });
+      memoryList.appendChild(row);
+    });
+
+    files
+      .filter((entry) => (entry.parentClipFolderId || CLIP_ROOT_ID) === currentClipFolderId)
+      .forEach((item) => {
       const row = document.createElement("div");
       row.className = "dp-memory-item";
       row.draggable = true;
@@ -1416,6 +1580,7 @@
       const dragBtn = document.createElement("button");
       dragBtn.className = "dp-mini-btn";
       dragBtn.textContent = "Drag";
+      dragBtn.draggable = true;
       dragBtn.addEventListener("click", () => {
         showToast("Drag from the card to drop externally");
       });
@@ -1425,8 +1590,9 @@
       delBtn.textContent = "Del";
       delBtn.addEventListener("click", (event) => {
         event.stopPropagation();
-        const next = window.droppoint.getFiles().filter((_, i) => i !== index);
+        const next = window.droppoint.getFiles().filter((entry) => entry.id !== item.id);
         window.droppoint.replaceItems(next);
+        scheduleAutoSave();
       });
 
       actions.appendChild(dragBtn);
@@ -1437,6 +1603,13 @@
       row.appendChild(actions);
 
       row.addEventListener("dragstart", (event) => {
+        event.dataTransfer.setData(
+          "application/x-dp-item-ids",
+          JSON.stringify(selectedIds.has(item.id) ? [...selectedIds] : [item.id])
+        );
+      });
+
+      dragBtn.addEventListener("dragstart", (event) => {
         event.preventDefault();
         const allItems = window.droppoint.getFiles();
         const intended = selectedIds.has(item.id)
@@ -1501,25 +1674,30 @@
     updateGalleryBtnState();
   }
 
-  async function saveCurrentZone() {
+  async function saveCurrentZone(auto = false) {
     const items = window.droppoint.getFiles();
+    if (auto && items.length === 0 && clipFolders.length <= 1) return;
+
+    const targetId = loadedZoneId || Date.now();
     const zone = {
-      id: loadedZoneId || Date.now(),
+      id: targetId,
       type: "zone",
       name: zoneName.textContent || "Drop Zone",
       files: items,
+      clipFolders,
       parentId: currentFolderId,
       savedAt: new Date().toISOString(),
+      autosaved: auto,
     };
 
     const existingIndex = zones.findIndex((entry) => entry.id === zone.id);
     if (existingIndex === -1) {
       zones.unshift(zone);
       loadedZoneId = zone.id;
-      showToast("Zone saved");
+      if (!auto) showToast("Zone saved");
     } else {
       zones[existingIndex] = zone;
-      showToast("Zone updated");
+      if (!auto) showToast("Zone updated");
     }
 
     await persistZones();
@@ -1536,6 +1714,10 @@
   function createZoneCard(zone) {
     const card = document.createElement("div");
     card.className = "dp-zone-card";
+    card.draggable = true;
+    card.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("application/x-dp-zone-id", String(zone.id));
+    });
 
     const header = document.createElement("div");
     header.className = "dp-zone-card-header";
@@ -1557,6 +1739,10 @@
     loadBtn.addEventListener("click", () => {
       loadedZoneId = zone.id;
       saveZoneName(zone.name);
+      clipFolders = Array.isArray(zone.clipFolders) && zone.clipFolders.length
+        ? zone.clipFolders
+        : [{ id: CLIP_ROOT_ID, name: "Root", parentId: null }];
+      setCurrentClipFolder(CLIP_ROOT_ID);
       window.droppoint.replaceItems(zone.files || []);
       overlay.classList.remove("dp-open");
       galleryList.classList.remove("dp-gallery-grid");
@@ -1624,6 +1810,10 @@
   function createFolderCard(folder) {
     const card = document.createElement("div");
     card.className = "dp-zone-card dp-folder-card";
+    card.draggable = true;
+    card.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("application/x-dp-zone-id", String(folder.id));
+    });
 
     const header = document.createElement("div");
     header.className = "dp-zone-card-header";
@@ -1644,6 +1834,21 @@
     openBtn.textContent = "Open";
     openBtn.addEventListener("click", () => {
       currentFolderId = folder.id;
+      renderGallery();
+    });
+
+    card.addEventListener("dragover", (event) => {
+      event.preventDefault();
+    });
+
+    card.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      const draggedId = event.dataTransfer.getData("application/x-dp-zone-id");
+      if (!draggedId || String(folder.id) === draggedId) return;
+      const dragged = zones.find((entry) => String(entry.id) === draggedId);
+      if (!dragged) return;
+      dragged.parentId = folder.id;
+      await persistZones();
       renderGallery();
     });
 
@@ -1682,6 +1887,19 @@
       btn.textContent = crumb.name;
       btn.addEventListener("click", () => {
         currentFolderId = crumb.id;
+        renderGallery();
+      });
+      btn.addEventListener("dragover", (event) => {
+        event.preventDefault();
+      });
+      btn.addEventListener("drop", async (event) => {
+        event.preventDefault();
+        const draggedId = event.dataTransfer.getData("application/x-dp-zone-id");
+        if (!draggedId) return;
+        const dragged = zones.find((entry) => String(entry.id) === draggedId);
+        if (!dragged) return;
+        dragged.parentId = crumb.id;
+        await persistZones();
         renderGallery();
       });
       galleryBreadcrumbs.appendChild(btn);
@@ -1833,6 +2051,7 @@
     };
 
     const finishRename = (shouldSave) => {
+      const previous = zoneName.textContent;
       if (shouldSave && !renameCanceled) {
         saveZoneName(zoneInput.value);
       } else {
@@ -1841,6 +2060,9 @@
       zoneInput.style.display = "none";
       renameRow.style.display = "none";
       zoneName.style.display = "";
+      if (zoneName.textContent !== previous) {
+        scheduleAutoSave();
+      }
     };
 
     zoneName.addEventListener("dblclick", (event) => {
@@ -1878,7 +2100,35 @@
       window.droppoint.clearItems();
       selectedIds.clear();
       loadedZoneId = null;
+      currentFolderId = ROOT_FOLDER_ID;
+      resetClipFoldersState();
+      saveZoneName(nextZoneName());
       showToast("Zone cleared");
+    });
+
+    clipViewToggleBtn.addEventListener("click", () => {
+      clipView = clipView === "grid" ? "list" : "grid";
+      clipViewToggleBtn.textContent = clipView === "grid" ? "List" : "Grid";
+      renderItems(window.droppoint.getFiles());
+    });
+
+    clipUpBtn.addEventListener("click", () => {
+      if (currentClipFolderId === CLIP_ROOT_ID) return;
+      const folder = getClipFolderById(currentClipFolderId);
+      setCurrentClipFolder(folder && folder.parentId ? folder.parentId : CLIP_ROOT_ID);
+      renderItems(window.droppoint.getFiles());
+    });
+
+    clipNewFolderBtn.addEventListener("click", () => {
+      const name = window.prompt("Folder name", "New Folder");
+      if (!name) return;
+      clipFolders.push({
+        id: `clip-folder-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name: name.trim() || "New Folder",
+        parentId: currentClipFolderId,
+      });
+      renderItems(window.droppoint.getFiles());
+      scheduleAutoSave();
     });
 
     closeBtn.addEventListener("click", () => {
@@ -2004,6 +2254,7 @@
       }
       window.droppoint.replaceItems(kept);
       showToast("Missing references cleared");
+      scheduleAutoSave();
     });
 
     document.addEventListener("keydown", (event) => {
@@ -2021,6 +2272,7 @@
 
     window.droppoint.subscribe((files) => {
       syncRendererView(files);
+      scheduleAutoSave();
     });
 
     window.electron.onClipboardItem((item) => {
@@ -2037,9 +2289,11 @@
 
   async function init() {
     loadZoneName();
+    resetClipFoldersState();
     await refreshZones();
     clipboardItems = await window.electron.getClipboardHistory();
     galleryViewToggleBtn.textContent = "List";
+    clipViewToggleBtn.textContent = "Grid";
     setupEvents();
     syncRendererView(window.droppoint.getFiles());
   }
