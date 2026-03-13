@@ -30,11 +30,16 @@
 
     <!-- ── TOOLBAR ─────────────────────────────────────────── -->
     <div id="dp-toolbar">
-      <div id="dp-title-group">
-      <span id="dp-zone-name" title="Drag from here">Drop Zone</span>
-      <button id="dp-rename-btn" class="dp-title-btn" title="Rename this Drop Zone">Edit</button>
+      <div id="dp-toolbar-head">
+        <div id="dp-title-group">
+          <span id="dp-zone-name" title="Double click to rename">Drop Zone</span>
+        </div>
+        <button id="dp-close-btn" title="Close this Drop Zone" class="dp-btn dp-btn-close" aria-label="Close this Drop Zone">&times;</button>
       </div>
-      <input id="dp-zone-input" type="text" value="Drop Zone" />
+      <div id="dp-rename-row">
+        <input id="dp-zone-input" type="text" value="Drop Zone" />
+        <button id="dp-rename-cancel" title="Cancel rename">&times;</button>
+      </div>
 
       <!-- Action buttons -->
       <div id="dp-btn-group">
@@ -68,7 +73,6 @@
           </svg>
           Clear
         </button>
-        <button id="dp-close-btn" title="Close this Drop Zone" class="dp-btn dp-btn-close" aria-label="Close this Drop Zone">&times;</button>
       </div>
     </div>
 
@@ -142,6 +146,16 @@
     </div>
   </div>
 
+  <div id="dp-text-preview-overlay">
+    <div id="dp-text-preview-panel">
+      <div id="dp-text-preview-header">
+        <div id="dp-text-preview-title">Text Preview</div>
+        <button id="dp-text-preview-close" title="Close Preview">&times;</button>
+      </div>
+      <pre id="dp-text-preview-body"></pre>
+    </div>
+  </div>
+
 </body>
 
 <!-- ══════════════════ STYLES ══════════════════ -->
@@ -190,26 +204,32 @@
   /* ── TOOLBAR ─────────────────────────────────── */
   #dp-toolbar {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 5px 8px 4px 10px;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 7px 8px 6px 10px;
     -webkit-app-region: drag;
     flex-shrink: 0;
-    gap: 4px;
-    min-height: 28px;
+    gap: 6px;
+    min-height: 44px;
+  }
+
+  #dp-toolbar-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   #dp-zone-name {
-    font-size: 0.62rem;
-    font-weight: 600;
-    color: #050a0fa0;
-    cursor: move;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #223041;
+    cursor: default;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 130px;
+    max-width: 180px;
     flex: 1;
-    -webkit-app-region: drag;
+    -webkit-app-region: no-drag;
     letter-spacing: 0.01em;
     transition: color 0.2s;
   }
@@ -228,9 +248,32 @@
     background: rgba(255,255,255,0.7);
     outline: none;
     flex: 1;
-    max-width: 90px;
+    max-width: 180px;
     display: none;
     -webkit-app-region: no-drag;
+  }
+
+  #dp-rename-row {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    -webkit-app-region: no-drag;
+  }
+
+  #dp-rename-cancel {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(5,10,15,0.08);
+    color: #4f5c6c;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  #dp-rename-cancel:hover {
+    background: rgba(224,82,82,0.18);
+    color: #bf3030;
   }
 
   #dp-title-group {
@@ -242,25 +285,6 @@
     -webkit-app-region: drag;
   }
 
-  .dp-title-btn {
-    -webkit-app-region: no-drag;
-    border: 1px solid rgba(5,10,15,0.16);
-    background: rgba(5,10,15,0.05);
-    color: #465365;
-    border-radius: 999px;
-    font-size: 0.55rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 2px 7px;
-    cursor: pointer;
-  }
-
-  .dp-title-btn:hover {
-    background: rgba(5,10,15,0.12);
-    color: #1e2a39;
-  }
-
   #dp-zone-input:focus {
     border-color: rgba(5,10,15,0.5);
     box-shadow: 0 0 0 2px rgba(5,10,15,0.08);
@@ -268,8 +292,9 @@
 
   #dp-btn-group {
     display: flex;
-    gap: 3px;
-    flex-shrink: 0;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
     -webkit-app-region: no-drag;
   }
 
@@ -277,10 +302,10 @@
     display: flex;
     align-items: center;
     gap: 3px;
-    font-size: 0.58rem;
+    font-size: 0.56rem;
     font-weight: 600;
     letter-spacing: 0.02em;
-    padding: 2px 6px;
+    padding: 3px 7px;
     border-radius: 4px;
     border: none;
     cursor: pointer;
@@ -364,8 +389,8 @@
   }
 
   .dp-btn-close {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     border-radius: 999px;
     padding: 0;
     font-size: 0.85rem;
@@ -373,6 +398,7 @@
     background: rgba(5,10,15,0.07);
     color: #5d6979;
     justify-content: center;
+    -webkit-app-region: no-drag;
   }
 
   .dp-btn-close:hover {
@@ -398,7 +424,7 @@
     color: #050a0fa2;
     user-select: none;
     border: 2px transparent solid;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
     transition: all 0.5s ease-in-out;
     display: flex;
     flex-direction: column;
@@ -443,12 +469,14 @@
     overflow-y: auto;
     max-height: 100%;
     padding-right: 2px;
+    -webkit-app-region: no-drag;
   }
 
   #dp-memory-actions {
     display: flex;
     gap: 6px;
     align-items: center;
+    -webkit-app-region: no-drag;
   }
 
   .dp-memory-drag-pill {
@@ -601,6 +629,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    -webkit-app-region: no-drag;
   }
 
   .file-icon {
@@ -1055,6 +1084,71 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  #dp-text-preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1002;
+    background: rgba(6, 10, 16, 0.6);
+    backdrop-filter: blur(3px);
+    -webkit-app-region: no-drag;
+  }
+
+  #dp-text-preview-overlay.dp-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #dp-text-preview-panel {
+    width: min(92vw, 680px);
+    max-height: 85vh;
+    background: #fdfcf9;
+    border: 1px solid rgba(5,10,15,0.12);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #dp-text-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(5,10,15,0.08);
+  }
+
+  #dp-text-preview-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #223041;
+  }
+
+  #dp-text-preview-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(5,10,15,0.08);
+    color: #4f5c6c;
+    cursor: pointer;
+  }
+
+  #dp-text-preview-body {
+    margin: 0;
+    padding: 12px;
+    overflow: auto;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: #1f2b39;
+    background: rgba(255,255,255,0.92);
+    min-height: 220px;
+  }
 </style>
 
 <!-- ══════════════════ EXISTING DROPPOINT RENDERER ══════════════════ -->
@@ -1069,8 +1163,9 @@
   const ROOT_FOLDER_ID = "root";
 
   const zoneName = document.getElementById("dp-zone-name");
-  const renameBtn = document.getElementById("dp-rename-btn");
+  const renameRow = document.getElementById("dp-rename-row");
   const zoneInput = document.getElementById("dp-zone-input");
+  const renameCancelBtn = document.getElementById("dp-rename-cancel");
   const newBtn = document.getElementById("dp-new-btn");
   const saveBtn = document.getElementById("dp-save-btn");
   const galleryBtn = document.getElementById("dp-gallery-btn");
@@ -1088,6 +1183,10 @@
   const clipboardOverlay = document.getElementById("dp-clipboard-overlay");
   const clipboardCloseBtn = document.getElementById("dp-clipboard-close");
   const clipboardList = document.getElementById("dp-clipboard-list");
+  const textPreviewOverlay = document.getElementById("dp-text-preview-overlay");
+  const textPreviewCloseBtn = document.getElementById("dp-text-preview-close");
+  const textPreviewTitle = document.getElementById("dp-text-preview-title");
+  const textPreviewBody = document.getElementById("dp-text-preview-body");
   const toast = document.getElementById("dp-toast");
   const memoryList = document.getElementById("dp-memory-list");
   const dropHint = document.getElementById("dp-drop-hint");
@@ -1113,6 +1212,32 @@
 
   function fileNameFromPath(filePath) {
     return (filePath || "").replace(/\\/g, "/").split("/").pop() || filePath;
+  }
+
+  function getItemType(item) {
+    return item.fileType || item.type || "file";
+  }
+
+  async function openTextPreview(item, title) {
+    if (!item || getItemType(item) !== "text") return;
+    let content = item.previewText || "";
+    try {
+      if (item.filepath && window.electron && typeof window.electron.readTextFile === "function") {
+        const result = await window.electron.readTextFile(item.filepath, 512 * 1024);
+        if (result && result.ok) {
+          content = result.content || "";
+          if (result.truncated) {
+            content += "\n\n--- truncated preview (512KB) ---";
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("[DropPoint] Text preview error", error);
+    }
+
+    textPreviewTitle.textContent = title || "Text Preview";
+    textPreviewBody.textContent = content || "(empty text)";
+    textPreviewOverlay.classList.add("dp-open");
   }
 
   function saveZoneName(name) {
@@ -1146,10 +1271,11 @@
   }
 
   function previewLabel(item) {
-    if (item.fileType === "text") {
+    const itemType = getItemType(item);
+    if (itemType === "text") {
       return item.previewText ? item.previewText.replace(/\s+/g, " ") : "Text snippet";
     }
-    if (item.fileType === "image") return item.source === "vault" ? "Pasted image" : "Image reference";
+    if (itemType === "image") return item.source === "vault" ? "Pasted image" : "Image reference";
     return item.source === "vault" ? "Stored in DropPoint" : "Linked reference";
   }
 
@@ -1207,8 +1333,9 @@
   function createThumb(item) {
     const thumb = document.createElement("div");
     thumb.className = "dp-memory-thumb";
+    const itemType = getItemType(item);
 
-    if (item.fileType === "image") {
+    if (itemType === "image") {
       const img = document.createElement("img");
       img.src = `file://${item.filepath}`;
       img.draggable = false;
@@ -1217,13 +1344,25 @@
       return thumb;
     }
 
-    if (item.fileType === "text") {
+    if (itemType === "text") {
       thumb.textContent = "TXT";
       return thumb;
     }
 
     thumb.textContent = "FILE";
     return thumb;
+  }
+
+  function syncSelectionClasses() {
+    const rows = memoryList.querySelectorAll(".dp-memory-item");
+    rows.forEach((row) => {
+      const id = row.dataset.itemId;
+      if (id && selectedIds.has(id)) {
+        row.classList.add("dp-memory-selected");
+      } else {
+        row.classList.remove("dp-memory-selected");
+      }
+    });
   }
 
   function renderItems(files) {
@@ -1238,6 +1377,7 @@
       const row = document.createElement("div");
       row.className = "dp-memory-item";
       row.draggable = true;
+      row.dataset.itemId = item.id || "";
       if (selectedIds.has(item.id)) {
         row.classList.add("dp-memory-selected");
       }
@@ -1260,6 +1400,18 @@
 
       const actions = document.createElement("div");
       actions.className = "dp-memory-actions";
+      const itemType = getItemType(item);
+
+      if (itemType === "text") {
+        const previewBtn = document.createElement("button");
+        previewBtn.className = "dp-mini-btn";
+        previewBtn.textContent = "View";
+        previewBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openTextPreview(item, item.displayName || "Text Preview");
+        });
+        actions.appendChild(previewBtn);
+      }
 
       const dragBtn = document.createElement("button");
       dragBtn.className = "dp-mini-btn";
@@ -1314,7 +1466,7 @@
         } else {
           selectedIds = new Set([item.id]);
         }
-        renderItems(window.droppoint.getFiles());
+        syncSelectionClasses();
       });
 
       memoryList.appendChild(row);
@@ -1433,10 +1585,29 @@
     const filesWrap = document.createElement("div");
     filesWrap.className = "dp-zone-files";
     (zone.files || []).slice(0, 8).forEach((item) => {
+      const itemType = getItemType(item);
       const chip = document.createElement("div");
       chip.className = "dp-file-chip";
       chip.title = item.displayName || fileNameFromPath(item.filepath);
-      chip.innerHTML = `<span class="dp-file-chip-icon">${item.fileType === "image" ? "IMG" : item.fileType === "text" ? "TXT" : "FILE"}</span><span class="dp-file-chip-name">${item.displayName || fileNameFromPath(item.filepath)}</span>`;
+
+      const icon = document.createElement("span");
+      icon.className = "dp-file-chip-icon";
+      icon.textContent = itemType === "image" ? "IMG" : itemType === "text" ? "TXT" : "FILE";
+
+      const label = document.createElement("span");
+      label.className = "dp-file-chip-name";
+      label.textContent = item.displayName || fileNameFromPath(item.filepath);
+
+      chip.appendChild(icon);
+      chip.appendChild(label);
+
+      if (itemType === "text") {
+        chip.style.cursor = "pointer";
+        chip.addEventListener("click", () => {
+          openTextPreview(item, item.displayName || "Text Preview");
+        });
+      }
+
       filesWrap.appendChild(chip);
     });
 
@@ -1544,10 +1715,11 @@
     const row = document.createElement("div");
     row.className = "dp-clip-item";
     row.draggable = true;
+    const itemType = getItemType(item);
 
     const thumb = document.createElement("div");
     thumb.className = "dp-clip-thumb";
-    if (item.fileType === "image") {
+    if (itemType === "image") {
       const img = document.createElement("img");
       img.src = `file://${item.filepath}`;
       thumb.appendChild(img);
@@ -1562,12 +1734,23 @@
     name.textContent = item.displayName || fileNameFromPath(item.filepath);
     const preview = document.createElement("div");
     preview.className = "dp-clip-preview";
-    preview.textContent = item.previewText || (item.fileType === "image" ? "Clipboard image" : "Clipboard text");
+    preview.textContent = item.previewText || (itemType === "image" ? "Clipboard image" : "Clipboard text");
     meta.appendChild(name);
     meta.appendChild(preview);
 
     const actions = document.createElement("div");
     actions.className = "dp-zone-card-actions";
+
+    if (itemType === "text") {
+      const viewBtn = document.createElement("button");
+      viewBtn.className = "dp-card-btn dp-card-btn-load";
+      viewBtn.textContent = "View";
+      viewBtn.addEventListener("click", () => {
+        openTextPreview(item, item.displayName || "Clipboard text");
+      });
+      actions.appendChild(viewBtn);
+    }
+
     const addBtn = document.createElement("button");
     addBtn.className = "dp-card-btn dp-card-btn-load";
     addBtn.textContent = "Add";
@@ -1593,6 +1776,13 @@
     clipboardItems.forEach((item) => {
       clipboardList.appendChild(createClipboardRow(item));
     });
+  }
+
+  function suspendClipboardDuringWindowDragHint() {
+    if (!window.electron || typeof window.electron.suspendClipboardCapture !== "function") {
+      return;
+    }
+    window.electron.suspendClipboardCapture(4000);
   }
 
   async function handlePaste(event) {
@@ -1631,28 +1821,50 @@
     if (uploadArea) uploadArea.style.display = "none";
     if (dragArea) dragArea.style.display = "none";
 
+    let renameCanceled = false;
     const startRename = () => {
+      renameCanceled = false;
       zoneName.style.display = "none";
-      renameBtn.style.display = "none";
+      renameRow.style.display = "flex";
       zoneInput.style.display = "block";
+      zoneInput.value = zoneName.textContent;
       zoneInput.focus();
       zoneInput.select();
     };
 
-    renameBtn.addEventListener("click", startRename);
+    const finishRename = (shouldSave) => {
+      if (shouldSave && !renameCanceled) {
+        saveZoneName(zoneInput.value);
+      } else {
+        zoneInput.value = zoneName.textContent;
+      }
+      zoneInput.style.display = "none";
+      renameRow.style.display = "none";
+      zoneName.style.display = "";
+    };
+
+    zoneName.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      startRename();
+    });
+
+    renameCancelBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      renameCanceled = true;
+      finishRename(false);
+    });
 
     zoneInput.addEventListener("blur", () => {
-      saveZoneName(zoneInput.value);
-      zoneInput.style.display = "none";
-      zoneName.style.display = "";
-      renameBtn.style.display = "";
+      finishRename(true);
     });
 
     zoneInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") zoneInput.blur();
       if (event.key === "Escape") {
-        zoneInput.value = zoneName.textContent;
-        zoneInput.blur();
+        renameCanceled = true;
+        finishRename(false);
       }
     });
 
@@ -1695,6 +1907,10 @@
       resizeWidget();
     });
 
+    textPreviewCloseBtn.addEventListener("click", () => {
+      textPreviewOverlay.classList.remove("dp-open");
+    });
+
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) {
         overlay.classList.remove("dp-open");
@@ -1709,9 +1925,15 @@
       }
     });
 
+    textPreviewOverlay.addEventListener("click", (event) => {
+      if (event.target === textPreviewOverlay) {
+        textPreviewOverlay.classList.remove("dp-open");
+      }
+    });
+
     galleryViewToggleBtn.addEventListener("click", () => {
       galleryView = galleryView === "grid" ? "list" : "grid";
-      galleryViewToggleBtn.textContent = galleryView === "grid" ? "Grid" : "List";
+      galleryViewToggleBtn.textContent = galleryView === "grid" ? "List" : "Grid";
       renderGallery();
     });
 
@@ -1740,6 +1962,17 @@
     });
 
     document.addEventListener("paste", handlePaste);
+
+    const dragHintZones = [document.getElementById("dp-toolbar"), document.getElementById("droppoint")];
+    dragHintZones.forEach((zone) => {
+      if (!zone) return;
+      zone.addEventListener("pointerdown", () => {
+        suspendClipboardDuringWindowDragHint();
+      });
+      zone.addEventListener("mousedown", () => {
+        suspendClipboardDuringWindowDragHint();
+      });
+    });
 
     dragSelected.addEventListener("dragstart", (event) => {
       event.preventDefault();
@@ -1774,6 +2007,10 @@
     });
 
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && textPreviewOverlay.classList.contains("dp-open")) {
+        textPreviewOverlay.classList.remove("dp-open");
+        return;
+      }
       if (event.key !== "Delete" && event.key !== "Backspace") return;
       const allItems = window.droppoint.getFiles();
       const kept = allItems.filter((item) => !selectedIds.has(item.id));
@@ -1802,6 +2039,7 @@
     loadZoneName();
     await refreshZones();
     clipboardItems = await window.electron.getClipboardHistory();
+    galleryViewToggleBtn.textContent = "List";
     setupEvents();
     syncRendererView(window.droppoint.getFiles());
   }

@@ -20,6 +20,14 @@ const galleryStore = new Store({
 
 let clipboardPollTimer = null;
 let lastClipboardSignature = "";
+let lastClipboardFormatsSignature = "";
+let lastImageProbeAt = 0;
+let clipboardSuspendUntil = 0;
+
+const suspendClipboardCapture = (ms = 2500) => {
+  const delay = Number.isFinite(ms) ? Math.max(250, Math.min(ms, 15000)) : 2500;
+  clipboardSuspendUntil = Math.max(clipboardSuspendUntil, Date.now() + delay);
+};
 
 const getVaultDir = () => {
   const vaultDir = path.join(app.getPath("userData"), "vault");
@@ -57,14 +65,43 @@ const broadcastClipboardItem = (item) => {
 
 const captureClipboard = () => {
   try {
-    const image = clipboard.readImage();
-    if (!image.isEmpty()) {
+    if (Date.now() < clipboardSuspendUntil) {
+      return;
+    }
+
+    const formats = clipboard.availableFormats().map((fmt) => fmt.toLowerCase());
+    const formatsSignature = formats.join("|");
+    const hasImageFormat = formats.some((fmt) => fmt.includes("image"));
+    const hasTextFormat = formats.some(
+      (fmt) => fmt.includes("text/plain") || fmt.includes("text")
+    );
+
+    const now = Date.now();
+
+    if (hasImageFormat) {
+      if (
+        formatsSignature === lastClipboardFormatsSignature &&
+        now - lastImageProbeAt < 3500
+      ) {
+        return;
+      }
+      lastImageProbeAt = now;
+
+      const image = clipboard.readImage();
+      if (image.isEmpty()) {
+        return;
+      }
+
+      const thumbBuffer = image.resize({ width: 32, height: 32 }).toPNG();
       const pngBuffer = image.toPNG();
       const signature = `img:${crypto
         .createHash("sha1")
-        .update(pngBuffer)
+        .update(thumbBuffer)
+        .update(String(image.getSize().width))
+        .update(String(image.getSize().height))
         .digest("hex")}`;
       if (signature !== lastClipboardSignature) {
+        lastClipboardFormatsSignature = formatsSignature;
         lastClipboardSignature = signature;
         const filePath = buildVaultFilePath("png");
         fs.writeFileSync(filePath, pngBuffer);
@@ -84,6 +121,8 @@ const captureClipboard = () => {
       return;
     }
 
+    if (!hasTextFormat) return;
+
     const text = clipboard.readText();
     const normalized = (text || "").trim();
     if (!normalized) return;
@@ -92,6 +131,7 @@ const captureClipboard = () => {
       .update(normalized)
       .digest("hex")}`;
     if (signature === lastClipboardSignature) return;
+    lastClipboardFormatsSignature = formatsSignature;
     lastClipboardSignature = signature;
     const filePath = buildVaultFilePath("txt");
     fs.writeFileSync(filePath, normalized, "utf8");
@@ -114,10 +154,21 @@ const captureClipboard = () => {
 
 const startClipboardWatcher = () => {
   if (clipboardPollTimer) return;
-  clipboardPollTimer = setInterval(captureClipboard, 900);
+  clipboardPollTimer = setInterval(captureClipboard, 1400);
 };
 
 startClipboardWatcher();
+
+app.on("browser-window-created", (event, win) => {
+  if (!win) return;
+  win.on("move", () => {
+    suspendClipboardCapture(2600);
+  });
+});
+
+ipcMain.on("clipboard:suspend", (event, ms) => {
+  suspendClipboardCapture(ms);
+});
 
 /**
  * Assigns file icons according to type. If multiple files, use multifile icon.
@@ -299,6 +350,21 @@ ipcMain.handle("vault:save-image", (event, { dataUrl }) => {
 
 ipcMain.handle("fs:file-exists", (event, { filepath }) => {
   return Boolean(filepath && fs.existsSync(filepath));
+});
+
+ipcMain.handle("fs:read-text", (event, { filepath, maxBytes }) => {
+  if (!filepath || !fs.existsSync(filepath)) {
+    return { ok: false, reason: "missing", content: "" };
+  }
+
+  const limit = Number.isFinite(maxBytes) ? Math.max(1024, Math.min(maxBytes, 1024 * 1024)) : 256 * 1024;
+  const fileBuffer = fs.readFileSync(filepath);
+  const sliced = fileBuffer.subarray(0, limit);
+  return {
+    ok: true,
+    content: sliced.toString("utf8"),
+    truncated: fileBuffer.length > limit,
+  };
 });
 
 ipcMain.handle("fs:reveal-in-folder", (event, { filepath }) => {

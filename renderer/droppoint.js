@@ -6,8 +6,12 @@ const subscribers = new Set();
 const holder = document.getElementById("droppoint");
 
 function normalizeType(type, filePath) {
-  if (type && type !== "application") return type;
   const lower = (filePath || "").toLowerCase();
+  const base = fileNameFromPath(filePath || "");
+  const hasExt = base.includes(".");
+
+  if (!type && !hasExt) return "folder";
+  if (type && type !== "application") return type;
   if (/(\.png|\.jpg|\.jpeg|\.gif|\.webp|\.bmp|\.svg)$/.test(lower)) return "image";
   if (/(\.txt|\.md|\.csv|\.json|\.js|\.ts|\.tsx|\.jsx|\.html|\.css|\.xml|\.yml|\.yaml)$/.test(lower)) return "text";
   if (/(\.mp4|\.mov|\.mkv|\.avi|\.webm)$/.test(lower)) return "video";

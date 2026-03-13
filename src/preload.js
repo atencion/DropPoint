@@ -33,8 +33,10 @@ contextBridge.exposeInMainWorld("electron", {
   fileExists: (filepath) => ipcRenderer.invoke("fs:file-exists", { filepath }),
   spawnInstance: () => ipcRenderer.send("spawn-instance"),
   revealInFolder: (filepath) => ipcRenderer.invoke("fs:reveal-in-folder", { filepath }),
+  readTextFile: (filepath, maxBytes) => ipcRenderer.invoke("fs:read-text", { filepath, maxBytes }),
   getClipboardHistory: () => ipcRenderer.invoke("clipboard:get-history"),
   onClipboardItem: (callback) => ipcRenderer.on("clipboard:item", (event, item) => callback(item)),
+  suspendClipboardCapture: (ms) => ipcRenderer.send("clipboard:suspend", ms),
 });
 
 // For settings renderer
