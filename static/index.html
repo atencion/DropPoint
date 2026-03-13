@@ -101,6 +101,7 @@
       <div id="dp-clip-breadcrumbs"></div>
       <div id="dp-memory-list"></div>
       <div id="dp-drop-hint">Drop files or paste text/images with Ctrl+V</div>
+      <div id="dp-folder-color-picker" aria-hidden="true"></div>
     </div>
 
     <!-- ── SAVE TOAST ──────────────────────────────────────── -->
@@ -548,10 +549,12 @@
   }
 
   .dp-clip-crumb {
-    border: 1px solid rgba(5, 10, 15, 0.14);
+    --dp-folder-rgb: 71, 85, 105;
+    --dp-folder-solid: #334155;
+    border: 1px solid rgba(var(--dp-folder-rgb), 0.28);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.65);
-    color: #344152;
+    background: rgba(var(--dp-folder-rgb), 0.12);
+    color: var(--dp-folder-solid);
     font-size: 0.56rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -561,26 +564,158 @@
   }
 
   .dp-clip-crumb.dp-clip-crumb-active {
-    background: rgba(8,145,178,0.13);
-    border-color: rgba(8,145,178,0.35);
-    color: rgb(8,145,178);
+    background: rgba(var(--dp-folder-rgb), 0.2);
+    border-color: rgba(var(--dp-folder-rgb), 0.48);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
   }
 
   .dp-clip-crumb.dp-drop-target-active {
-    background: rgba(8,145,178,0.22);
-    border-color: rgba(8,145,178,0.52);
-    color: rgb(8,145,178);
+    background: rgba(var(--dp-folder-rgb), 0.3);
+    border-color: rgba(var(--dp-folder-rgb), 0.64);
+    color: var(--dp-folder-solid);
   }
 
   .dp-memory-folder {
-    border: 1px solid rgba(217, 119, 6, 0.3);
-    background: rgba(217, 119, 6, 0.08);
+    --dp-folder-rgb: 14, 116, 144;
+    --dp-folder-solid: #0f4c5d;
+    border: 2px solid rgba(var(--dp-folder-rgb), 0.46);
+    background: linear-gradient(
+      180deg,
+      rgba(var(--dp-folder-rgb), 0.2) 0%,
+      rgba(var(--dp-folder-rgb), 0.08) 100%
+    );
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.56);
   }
 
   .dp-memory-folder.dp-drop-target-active {
-    border-color: rgba(8,145,178,0.48);
-    background: rgba(8,145,178,0.14);
-    box-shadow: inset 0 0 0 1px rgba(8,145,178,0.18);
+    border-color: rgba(var(--dp-folder-rgb), 0.72);
+    background: rgba(var(--dp-folder-rgb), 0.26);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
+  }
+
+  .dp-memory-folder .dp-memory-thumb {
+    background: rgba(var(--dp-folder-rgb), 0.26);
+    border: 1px solid rgba(var(--dp-folder-rgb), 0.42);
+    color: var(--dp-folder-solid);
+  }
+
+  .dp-memory-folder .dp-memory-name {
+    color: var(--dp-folder-solid);
+  }
+
+  .dp-memory-folder .dp-memory-preview {
+    color: rgba(var(--dp-folder-rgb), 0.95);
+  }
+
+  .dp-memory-thumb-folder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .dp-folder-glyph {
+    width: 15px;
+    height: 15px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .dp-folder-glyph > span {
+    border-radius: 2px;
+    background: currentColor;
+    opacity: 0.82;
+  }
+
+  .dp-folder-dir-label {
+    font-size: 0.46rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-memory-folder {
+    border-width: 2px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+      0 0 0 1px rgba(var(--dp-folder-rgb), 0.22);
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-memory-thumb-folder {
+    gap: 6px;
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-folder-glyph {
+    width: 28px;
+    height: 28px;
+    gap: 4px;
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-folder-dir-label {
+    font-size: 0.84rem;
+  }
+
+  .dp-memory-folder .dp-mini-btn.dp-folder-color-btn {
+    border-color: rgba(var(--dp-folder-rgb), 0.42);
+    background: rgba(var(--dp-folder-rgb), 0.18);
+    color: var(--dp-folder-solid);
+  }
+
+  .dp-memory-folder .dp-mini-btn.dp-folder-color-btn:hover {
+    background: rgba(var(--dp-folder-rgb), 0.28);
+  }
+
+  #dp-folder-color-picker {
+    position: fixed;
+    z-index: 30;
+    width: 238px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 9px;
+    border-radius: 10px;
+    border: 1px solid rgba(5, 10, 15, 0.14);
+    background: rgba(255, 250, 240, 0.98);
+    box-shadow: 0 14px 30px rgba(5, 10, 15, 0.26);
+    -webkit-app-region: no-drag;
+  }
+
+  #dp-folder-color-picker.dp-open {
+    display: flex;
+  }
+
+  .dp-folder-color-title {
+    font-size: 0.56rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 800;
+    color: #455365;
+  }
+
+  .dp-folder-color-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .dp-folder-color-swatch {
+    border-radius: 999px;
+    border: 1px solid;
+    font-size: 0.56rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-weight: 800;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+
+  .dp-folder-color-swatch:hover {
+    transform: translateY(-1px);
   }
 
   .dp-memory-drag-pill {
@@ -791,6 +926,13 @@
   }
 
   /* ── GALLERY OVERLAY ──────────────────────────── */
+  :root {
+    --dp-gallery-surface: rgba(255, 255, 255, 0.86);
+    --dp-gallery-border: rgba(5, 10, 15, 0.1);
+    --dp-gallery-muted: #6f7b8c;
+    --dp-gallery-title: #101926;
+  }
+
   #dp-gallery-overlay {
     display: none;
     position: fixed;
@@ -923,16 +1065,16 @@
 
   #dp-gallery-list {
     overflow-y: auto;
-    padding: 20px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
 
   #dp-gallery-list.dp-gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
   }
 
   #dp-gallery-list::-webkit-scrollbar {
@@ -950,56 +1092,66 @@
 
   /* ── GALLERY ZONE CARD ────────────────────────── */
   .dp-zone-card {
-    background: rgba(255,255,255,0.80);
-    border: 1px solid rgba(5,10,15,0.09);
+    background: var(--dp-gallery-surface);
+    border: 1px solid var(--dp-gallery-border);
     border-radius: 12px;
-    padding: 18px 20px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    transition: box-shadow 0.15s, border-color 0.15s;
+    gap: 10px;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
   }
 
   .dp-zone-card:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.10);
     border-color: rgba(5,10,15,0.16);
+    transform: translateY(-1px);
   }
 
   .dp-zone-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name actions"
+      "meta actions";
+    gap: 8px 12px;
+    align-items: start;
   }
 
   .dp-zone-card-name {
+    grid-area: name;
     font-size: 1rem;
     font-weight: 700;
-    color: #050a0f;
-    flex: 1;
-    white-space: nowrap;
+    color: var(--dp-gallery-title);
+    white-space: normal;
+    line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .dp-zone-card-meta {
     font-size: 0.8rem;
-    color: #888;
+    color: var(--dp-gallery-muted);
     white-space: nowrap;
   }
 
   .dp-zone-card-info {
+    grid-area: meta;
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
     min-width: 0;
   }
 
   .dp-zone-card-actions {
+    grid-area: actions;
     display: flex;
     gap: 7px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     flex-shrink: 0;
-    align-items: center;
+    align-items: flex-start;
   }
 
   .dp-card-btn {
@@ -1014,6 +1166,7 @@
     transition: all 0.15s;
     font-family: inherit;
     line-height: 1.4;
+    white-space: nowrap;
   }
 
   .dp-card-btn-load {
@@ -1040,8 +1193,8 @@
 
   /* ── GALLERY FILE LIST ─────────────────────────── */
   .dp-zone-files {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 7px;
   }
 
@@ -1055,7 +1208,8 @@
     border: 1px solid rgba(5,10,15,0.08);
     border-radius: 6px;
     padding: 5px 11px;
-    max-width: 300px;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .dp-file-chip-icon {
@@ -1069,6 +1223,13 @@
     text-overflow: ellipsis;
   }
 
+  .dp-file-chip-more {
+    justify-content: center;
+    color: #516071;
+    background: rgba(5,10,15,0.03);
+    border-style: dashed;
+  }
+
   .dp-zone-no-files {
     font-size: 0.82rem;
     color: #aaa;
@@ -1077,8 +1238,33 @@
 
   .dp-zone-card-date {
     font-size: 0.76rem;
-    color: #aaa;
+    color: #9aa3af;
     margin-top: 2px;
+  }
+
+  #dp-gallery-list.dp-gallery-grid .dp-zone-card-header {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "name"
+      "meta"
+      "actions";
+  }
+
+  #dp-gallery-list.dp-gallery-grid .dp-zone-card-actions {
+    justify-content: flex-start;
+  }
+
+  #dp-gallery-list.dp-gallery-grid .dp-zone-card-actions .dp-card-btn {
+    flex: 1 1 calc(50% - 7px);
+    text-align: center;
+  }
+
+  #dp-gallery-list.dp-gallery-grid .dp-zone-files {
+    grid-template-columns: 1fr;
+  }
+
+  #dp-gallery-list.dp-gallery-grid .dp-zone-card-name {
+    font-size: 0.96rem;
   }
 
   /* ── LOADED ZONE INDICATOR ─────────────────────── */
@@ -1114,6 +1300,51 @@
     border: 1px solid rgba(22,163,74,0.24);
     padding: 3px 8px;
     border-radius: 999px;
+  }
+
+  @media (max-width: 760px) {
+    #dp-gallery-panel {
+      width: min(96vw, 720px);
+      max-height: 94vh;
+    }
+
+    #dp-gallery-header {
+      padding: 18px 16px 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    #dp-gallery-controls {
+      margin-left: 0;
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    #dp-gallery-close {
+      margin-left: auto;
+    }
+
+    #dp-gallery-list {
+      padding: 12px;
+    }
+
+    #dp-gallery-list.dp-gallery-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .dp-zone-card {
+      padding: 14px;
+    }
+
+    .dp-zone-files {
+      grid-template-columns: 1fr;
+    }
+
+    .dp-zone-card-actions {
+      justify-content: flex-start;
+    }
   }
 
   #dp-clipboard-overlay {
@@ -1186,6 +1417,14 @@
     grid-template-columns: 42px 1fr auto;
     gap: 8px;
     align-items: center;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+  }
+
+  .dp-clip-item:hover,
+  .dp-clip-item:focus-within {
+    border-color: rgba(8,145,178,0.26);
+    box-shadow: 0 4px 14px rgba(5,10,15,0.08);
+    background: rgba(255,255,255,0.96);
   }
 
   .dp-clip-thumb {
@@ -1200,6 +1439,7 @@
     font-size: 0.65rem;
     font-weight: 700;
     color: #4f5c6c;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
   }
 
   .dp-clip-thumb img {
@@ -1207,6 +1447,7 @@
     height: 100%;
     object-fit: cover;
     pointer-events: none;
+    transition: transform 0.16s ease;
   }
 
   .dp-clip-meta {
@@ -1225,12 +1466,64 @@
     text-overflow: ellipsis;
   }
 
+  .dp-clip-item-image .dp-clip-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    white-space: normal;
+    line-height: 1.24;
+    max-height: 1em;
+    transition: max-height 0.16s ease, font-size 0.16s ease;
+  }
+
+  .dp-clip-item-image:hover .dp-clip-name,
+  .dp-clip-item-image:focus-within .dp-clip-name {
+    -webkit-line-clamp: 2;
+    max-height: 2.5em;
+    font-size: 0.7rem;
+  }
+
+  .dp-clip-item-image:hover .dp-clip-thumb,
+  .dp-clip-item-image:focus-within .dp-clip-thumb {
+    transform: scale(1.08);
+    box-shadow: 0 4px 10px rgba(5,10,15,0.14);
+  }
+
+  .dp-clip-item-image:hover .dp-clip-thumb img,
+  .dp-clip-item-image:focus-within .dp-clip-thumb img {
+    transform: scale(1.08);
+  }
+
   .dp-clip-preview {
     font-size: 0.6rem;
     color: #6b7889;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .dp-clip-item-text .dp-clip-preview {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    white-space: normal;
+    line-height: 1.25;
+    max-height: 1em;
+    transition: max-height 0.16s ease, font-size 0.16s ease, color 0.16s ease;
+  }
+
+  .dp-clip-item-text:hover .dp-clip-preview,
+  .dp-clip-item-text:focus-within .dp-clip-preview {
+    -webkit-line-clamp: 3;
+    max-height: 3.9em;
+    font-size: 0.64rem;
+    color: #4f5c6c;
+  }
+
+  .dp-clip-view-btn {
+    font-size: 0.68rem;
+    padding: 5px 10px;
+    letter-spacing: 0.035em;
   }
 
   #dp-text-preview-overlay {
@@ -1346,6 +1639,7 @@
   const clipViewToggleBtn = document.getElementById("dp-clip-view-toggle");
   const clipBreadcrumbs = document.getElementById("dp-clip-breadcrumbs");
   const clearMissing = document.getElementById("dp-clear-missing");
+  const folderColorPicker = document.getElementById("dp-folder-color-picker");
   const uploadArea = document.querySelector(".upload");
   const dragArea = document.getElementById("drag");
 
@@ -1367,6 +1661,19 @@
   let toastTimer = null;
   let selectedIds = new Set();
 
+  const DEFAULT_FOLDER_COLOR_KEY = "sky";
+  const ROOT_FOLDER_COLOR_KEY = "slate";
+  const FOLDER_COLOR_PALETTE = [
+    { key: "slate", label: "Slate", rgb: "71,85,105", solid: "#334155", bg: "rgba(71,85,105,0.16)", border: "rgba(71,85,105,0.44)", text: "#1f2937" },
+    { key: "sky", label: "Sky", rgb: "8,145,178", solid: "#0e7490", bg: "rgba(8,145,178,0.16)", border: "rgba(8,145,178,0.44)", text: "#0e7490" },
+    { key: "green", label: "Green", rgb: "22,163,74", solid: "#15803d", bg: "rgba(22,163,74,0.16)", border: "rgba(22,163,74,0.44)", text: "#166534" },
+    { key: "amber", label: "Amber", rgb: "217,119,6", solid: "#b45309", bg: "rgba(217,119,6,0.18)", border: "rgba(217,119,6,0.5)", text: "#92400e" },
+    { key: "rose", label: "Rose", rgb: "225,29,72", solid: "#be123c", bg: "rgba(225,29,72,0.14)", border: "rgba(225,29,72,0.42)", text: "#9f1239" },
+    { key: "violet", label: "Violet", rgb: "124,58,237", solid: "#6d28d9", bg: "rgba(124,58,237,0.14)", border: "rgba(124,58,237,0.44)", text: "#5b21b6" },
+    { key: "cyan", label: "Cyan", rgb: "6,182,212", solid: "#0891b2", bg: "rgba(6,182,212,0.17)", border: "rgba(6,182,212,0.47)", text: "#0e7490" },
+    { key: "stone", label: "Stone", rgb: "87,83,78", solid: "#57534e", bg: "rgba(87,83,78,0.17)", border: "rgba(87,83,78,0.46)", text: "#44403c" },
+  ];
+
   function fileNameFromPath(filePath) {
     return (filePath || "").replace(/\\/g, "/").split("/").pop() || filePath;
   }
@@ -1382,8 +1689,96 @@
     return `Zone ${next}`;
   }
 
+  function getFolderColorTone(colorKey) {
+    return FOLDER_COLOR_PALETTE.find((entry) => entry.key === colorKey) || FOLDER_COLOR_PALETTE[0];
+  }
+
+  function applyFolderColor(node, colorKey) {
+    if (!node) return;
+    const tone = getFolderColorTone(colorKey);
+    node.style.setProperty("--dp-folder-rgb", tone.rgb);
+    node.style.setProperty("--dp-folder-solid", tone.solid);
+  }
+
+  function normalizeClipFolder(folder) {
+    if (!folder || !folder.id) return null;
+    const fallbackKey = folder.id === CLIP_ROOT_ID ? ROOT_FOLDER_COLOR_KEY : DEFAULT_FOLDER_COLOR_KEY;
+    const tone = getFolderColorTone(folder.colorKey || fallbackKey);
+    return {
+      ...folder,
+      colorKey: tone.key,
+    };
+  }
+
+  function ensureClipFoldersModel(rawFolders) {
+    const source = Array.isArray(rawFolders) && rawFolders.length
+      ? rawFolders
+      : [{ id: CLIP_ROOT_ID, name: "Root", parentId: null, colorKey: ROOT_FOLDER_COLOR_KEY }];
+    const normalized = source
+      .map((folder) => normalizeClipFolder(folder))
+      .filter(Boolean);
+
+    if (!normalized.some((folder) => folder.id === CLIP_ROOT_ID)) {
+      normalized.unshift({ id: CLIP_ROOT_ID, name: "Root", parentId: null, colorKey: ROOT_FOLDER_COLOR_KEY });
+    }
+
+    return normalized;
+  }
+
+  function hideFolderColorPicker() {
+    folderColorPicker.classList.remove("dp-open");
+    folderColorPicker.setAttribute("aria-hidden", "true");
+    folderColorPicker.innerHTML = "";
+  }
+
+  function openFolderColorPicker(anchor, folder) {
+    if (!folder || !anchor) return;
+    folderColorPicker.innerHTML = "";
+
+    const title = document.createElement("div");
+    title.className = "dp-folder-color-title";
+    title.textContent = `Color - ${folder.name}`;
+
+    const grid = document.createElement("div");
+    grid.className = "dp-folder-color-grid";
+    FOLDER_COLOR_PALETTE.forEach((tone) => {
+      const swatch = document.createElement("button");
+      swatch.type = "button";
+      swatch.className = "dp-folder-color-swatch";
+      swatch.style.background = tone.bg;
+      swatch.style.borderColor = tone.border;
+      swatch.style.color = tone.text;
+      swatch.textContent = folder.colorKey === tone.key ? `${tone.label} *` : tone.label;
+      swatch.addEventListener("click", (event) => {
+        event.stopPropagation();
+        folder.colorKey = tone.key;
+        hideFolderColorPicker();
+        renderItems(window.droppoint.getFiles());
+        scheduleAutoSave();
+      });
+      grid.appendChild(swatch);
+    });
+
+    folderColorPicker.appendChild(title);
+    folderColorPicker.appendChild(grid);
+    folderColorPicker.classList.add("dp-open");
+    folderColorPicker.setAttribute("aria-hidden", "false");
+
+    const rect = anchor.getBoundingClientRect();
+    const pickerWidth = 238;
+    const pickerHeight = 210;
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - pickerWidth - 8));
+    let top = rect.bottom + 8;
+    if (top + pickerHeight > window.innerHeight - 8) {
+      top = Math.max(8, rect.top - pickerHeight - 8);
+    }
+    folderColorPicker.style.left = `${Math.round(left)}px`;
+    folderColorPicker.style.top = `${Math.round(top)}px`;
+  }
+
   function resetClipFoldersState() {
-    clipFolders = [{ id: CLIP_ROOT_ID, name: "Root", parentId: null }];
+    clipFolders = ensureClipFoldersModel([{ id: CLIP_ROOT_ID, name: "Root", parentId: null, colorKey: ROOT_FOLDER_COLOR_KEY }]);
+    hideFolderColorPicker();
     setCurrentClipFolder(CLIP_ROOT_ID);
     selectedIds.clear();
   }
@@ -1408,7 +1803,10 @@
       path.unshift(folder);
       cursor = folder.parentId;
     }
-    return [{ id: CLIP_ROOT_ID, name: "Root" }, ...path];
+    const root = normalizeClipFolder(
+      getClipFolderById(CLIP_ROOT_ID) || { id: CLIP_ROOT_ID, name: "Root", parentId: null, colorKey: ROOT_FOLDER_COLOR_KEY }
+    );
+    return [root, ...path];
   }
 
   function scheduleAutoSave() {
@@ -1561,9 +1959,7 @@
           parentId: entry.parentId || ROOT_FOLDER_ID,
           clipFolders:
             entry.type === "zone"
-              ? Array.isArray(entry.clipFolders) && entry.clipFolders.length
-                ? entry.clipFolders
-                : [{ id: CLIP_ROOT_ID, name: "Root", parentId: null }]
+              ? ensureClipFoldersModel(entry.clipFolders)
               : entry.clipFolders,
         };
       }
@@ -1572,7 +1968,7 @@
         ...entry,
         type: "zone",
         parentId: ROOT_FOLDER_ID,
-        clipFolders: [{ id: CLIP_ROOT_ID, name: "Root", parentId: null }],
+        clipFolders: ensureClipFoldersModel([{ id: CLIP_ROOT_ID, name: "Root", parentId: null, colorKey: ROOT_FOLDER_COLOR_KEY }]),
       };
     });
 
@@ -1652,6 +2048,7 @@
     crumbs.forEach((crumb) => {
       const node = document.createElement("button");
       node.className = "dp-clip-crumb";
+      applyFolderColor(node, crumb.colorKey);
       if (crumb.id === currentClipFolderId) {
         node.classList.add("dp-clip-crumb-active");
       }
@@ -1678,6 +2075,7 @@
 
   function renderItems(files) {
     memoryList.innerHTML = "";
+    hideFolderColorPicker();
     memoryList.classList.toggle("dp-clip-grid", clipView === "grid");
     renderClipBreadcrumbs();
 
@@ -1690,10 +2088,21 @@
     childFolders.forEach((folder) => {
       const row = document.createElement("div");
       row.className = "dp-memory-item dp-memory-folder";
+      applyFolderColor(row, folder.colorKey);
 
       const thumb = document.createElement("div");
-      thumb.className = "dp-memory-thumb";
-      thumb.textContent = "DIR";
+      thumb.className = "dp-memory-thumb dp-memory-thumb-folder";
+      const glyph = document.createElement("div");
+      glyph.className = "dp-folder-glyph";
+      for (let i = 0; i < 4; i += 1) {
+        const cell = document.createElement("span");
+        glyph.appendChild(cell);
+      }
+      const dirLabel = document.createElement("div");
+      dirLabel.className = "dp-folder-dir-label";
+      dirLabel.textContent = "DIR";
+      thumb.appendChild(glyph);
+      thumb.appendChild(dirLabel);
 
       const meta = document.createElement("div");
       meta.className = "dp-memory-meta";
@@ -1702,7 +2111,10 @@
       name.textContent = folder.name;
       const preview = document.createElement("div");
       preview.className = "dp-memory-preview";
-      preview.textContent = "Folder";
+      const nestedFoldersCount = clipFolders.filter((entry) => entry.parentId === folder.id).length;
+      const nestedItemsCount = files.filter((entry) => (entry.parentClipFolderId || CLIP_ROOT_ID) === folder.id).length;
+      const nestedTotal = nestedFoldersCount + nestedItemsCount;
+      preview.textContent = nestedTotal ? `${nestedTotal} item${nestedTotal === 1 ? "" : "s"}` : "Empty folder";
       meta.appendChild(name);
       meta.appendChild(preview);
 
@@ -1743,8 +2155,17 @@
         showToast(`Folder renamed: ${nextName}`);
       });
 
+      const colorBtn = document.createElement("button");
+      colorBtn.className = "dp-mini-btn dp-folder-color-btn";
+      colorBtn.textContent = "Color";
+      colorBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openFolderColorPicker(colorBtn, folder);
+      });
+
       actions.appendChild(openBtn);
       actions.appendChild(renameBtn);
+      actions.appendChild(colorBtn);
 
       row.appendChild(thumb);
       row.appendChild(meta);
@@ -1998,9 +2419,7 @@
     loadBtn.addEventListener("click", () => {
       loadedZoneId = zone.id;
       saveZoneName(zone.name);
-      clipFolders = Array.isArray(zone.clipFolders) && zone.clipFolders.length
-        ? zone.clipFolders
-        : [{ id: CLIP_ROOT_ID, name: "Root", parentId: null }];
+      clipFolders = ensureClipFoldersModel(zone.clipFolders);
       setCurrentClipFolder(CLIP_ROOT_ID);
       window.droppoint.replaceItems(zone.files || []);
       overlay.classList.remove("dp-open");
@@ -2032,7 +2451,9 @@
 
     const filesWrap = document.createElement("div");
     filesWrap.className = "dp-zone-files";
-    (zone.files || []).slice(0, 8).forEach((item) => {
+    const zoneFiles = zone.files || [];
+    const previewLimit = galleryView === "grid" ? 4 : 6;
+    zoneFiles.slice(0, previewLimit).forEach((item) => {
       const itemType = getItemType(item);
       const chip = document.createElement("div");
       chip.className = "dp-file-chip";
@@ -2058,6 +2479,20 @@
 
       filesWrap.appendChild(chip);
     });
+
+    if (zoneFiles.length > previewLimit) {
+      const moreChip = document.createElement("div");
+      moreChip.className = "dp-file-chip dp-file-chip-more";
+      moreChip.textContent = `+${zoneFiles.length - previewLimit} more`;
+      filesWrap.appendChild(moreChip);
+    }
+
+    if (!zoneFiles.length) {
+      const empty = document.createElement("div");
+      empty.className = "dp-zone-no-files";
+      empty.textContent = "No files in this zone";
+      filesWrap.appendChild(empty);
+    }
 
     card.appendChild(filesWrap);
 
@@ -2221,6 +2656,11 @@
     row.className = "dp-clip-item";
     row.draggable = true;
     const itemType = getItemType(item);
+    if (itemType === "text") {
+      row.classList.add("dp-clip-item-text");
+    } else if (itemType === "image") {
+      row.classList.add("dp-clip-item-image");
+    }
 
     const thumb = document.createElement("div");
     thumb.className = "dp-clip-thumb";
@@ -2248,7 +2688,7 @@
 
     if (itemType === "text") {
       const viewBtn = document.createElement("button");
-      viewBtn.className = "dp-card-btn dp-card-btn-load";
+      viewBtn.className = "dp-card-btn dp-card-btn-load dp-clip-view-btn";
       viewBtn.textContent = "View";
       viewBtn.addEventListener("click", () => {
         openTextPreview(item, item.displayName || "Clipboard text");
@@ -2410,6 +2850,7 @@
     });
 
     clipNewFolderBtn.addEventListener("click", () => {
+      const parentFolder = getClipFolderById(currentClipFolderId);
       const name = nextFolderName(
         clipFolders
           .filter((folder) => folder.parentId === currentClipFolderId)
@@ -2419,6 +2860,7 @@
         id: `clip-folder-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         name,
         parentId: currentClipFolderId,
+        colorKey: parentFolder ? parentFolder.colorKey : DEFAULT_FOLDER_COLOR_KEY,
       });
       renderItems(window.droppoint.getFiles());
       scheduleAutoSave();
@@ -2562,7 +3004,22 @@
       scheduleAutoSave();
     });
 
+    document.addEventListener("click", (event) => {
+      if (!folderColorPicker.classList.contains("dp-open")) return;
+      if (folderColorPicker.contains(event.target)) return;
+      hideFolderColorPicker();
+    });
+
+    window.addEventListener("resize", () => {
+      if (!folderColorPicker.classList.contains("dp-open")) return;
+      hideFolderColorPicker();
+    });
+
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && folderColorPicker.classList.contains("dp-open")) {
+        hideFolderColorPicker();
+        return;
+      }
       if (event.key === "Escape" && textPreviewOverlay.classList.contains("dp-open")) {
         textPreviewOverlay.classList.remove("dp-open");
         return;
