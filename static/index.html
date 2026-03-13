@@ -196,16 +196,22 @@
   html {
     top: 0;
     left: 0;
-    width: fit-content;
-    height: fit-content;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 
   body {
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 
   /* ── TOOLBAR ─────────────────────────────────── */
+  #dp-app-wrap {
+    overflow: hidden;
+  }
+
   #dp-toolbar {
     display: flex;
     flex-direction: column;
@@ -424,6 +430,7 @@
   #droppoint {
     position: relative;
     flex: 1;
+    min-height: 0;
     margin: 4px 8px 8px 8px;
     color: #050a0fa2;
     user-select: none;
@@ -469,9 +476,11 @@
   #dp-memory-list {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
     gap: 6px;
     overflow-y: auto;
-    max-height: 100%;
+    overflow-x: hidden;
     padding-right: 2px;
     -webkit-app-region: no-drag;
   }
