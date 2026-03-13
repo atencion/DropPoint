@@ -34,6 +34,11 @@
         <div id="dp-title-group">
           <span id="dp-zone-name" title="Double click to rename">Drop Zone</span>
         </div>
+        <div id="dp-mode-switch" aria-label="View mode">
+          <button id="dp-mode-normal" class="dp-mode-btn" type="button" title="Normal mode">Normal</button>
+          <button id="dp-mode-compact" class="dp-mode-btn" type="button" title="Compact mode">Compact</button>
+          <button id="dp-mode-mini" class="dp-mode-btn" type="button" title="Mini mode">Mini</button>
+        </div>
         <button id="dp-close-btn" title="Close this Drop Zone" class="dp-btn dp-btn-close" aria-label="Close this Drop Zone">&times;</button>
       </div>
       <div id="dp-rename-row">
@@ -256,6 +261,37 @@
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  #dp-mode-switch {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    -webkit-app-region: no-drag;
+  }
+
+  .dp-mode-btn {
+    border: 1px solid rgba(5, 10, 15, 0.16);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.58);
+    color: #3f4b5c;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 4px 8px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .dp-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.84);
+    border-color: rgba(5, 10, 15, 0.3);
+  }
+
+  .dp-mode-btn.dp-active {
+    background: rgba(15, 118, 110, 0.16);
+    border-color: rgba(15, 118, 110, 0.42);
+    color: var(--dp-accent-strong);
   }
 
   #dp-zone-name {
@@ -948,6 +984,117 @@
     align-items: center;
     justify-content: center;
     -webkit-app-region: no-drag;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] #dp-toolbar {
+    padding: 6px 8px;
+    gap: 5px;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] #dp-zone-name {
+    max-width: 130px;
+    font-size: 0.68rem;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] .dp-btn {
+    min-height: 24px;
+    font-size: 0.57rem;
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] .dp-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] .dp-memory-tool-btn,
+  #dp-app-wrap[data-dp-mode="compact"] .dp-memory-danger-btn,
+  #dp-app-wrap[data-dp-mode="compact"] .dp-memory-drag-pill {
+    font-size: 0.56rem;
+    padding: 4px 9px;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] .dp-memory-item {
+    grid-template-columns: 38px 1fr auto;
+    min-height: 46px;
+    gap: 6px;
+    padding: 5px;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] .dp-memory-thumb {
+    width: 38px;
+    height: 38px;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] .dp-memory-name {
+    font-size: 0.64rem;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] .dp-memory-preview {
+    font-size: 0.57rem;
+  }
+
+  #dp-app-wrap[data-dp-mode="compact"] .dp-mini-btn {
+    font-size: 0.53rem;
+    padding: 2px 5px;
+  }
+
+  #dp-app-wrap[data-dp-mode="mini"] #dp-btn-group,
+  #dp-app-wrap[data-dp-mode="mini"] #dp-memory-actions,
+  #dp-app-wrap[data-dp-mode="mini"] #dp-clip-breadcrumbs,
+  #dp-app-wrap[data-dp-mode="mini"] #dp-memory-list,
+  #dp-app-wrap[data-dp-mode="mini"] #dp-drop-hint,
+  #dp-app-wrap[data-dp-mode="mini"] #dp-rename-row {
+    display: none !important;
+  }
+
+  #dp-app-wrap[data-dp-mode="mini"] #dp-toolbar {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  #dp-app-wrap[data-dp-mode="mini"] #dp-zone-name {
+    max-width: 92px;
+    font-size: 0.64rem;
+  }
+
+  #dp-app-wrap[data-dp-mode="mini"] #droppoint {
+    flex: none;
+    width: min(190px, calc(100vw - 18px));
+    height: min(190px, calc(100vh - 66px));
+    margin: auto;
+    border: 1.5px dashed rgba(15, 118, 110, 0.52);
+    border-radius: 12px;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(236, 253, 245, 0.78));
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    gap: 0;
+  }
+
+  #dp-app-wrap[data-dp-mode="mini"] #droppoint > * {
+    display: none !important;
+  }
+
+  #dp-app-wrap[data-dp-mode="mini"] #droppoint::before {
+    content: "Drop files";
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #12564d;
+    letter-spacing: 0.02em;
+  }
+
+  #dp-app-wrap[data-dp-mode="mini"] #droppoint::after {
+    content: attr(data-mini-label);
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.56rem;
+    font-weight: 700;
+    color: #5b6878;
+    white-space: nowrap;
   }
 
   .file-icon {
@@ -1672,6 +1819,7 @@
   const NAME_COUNTER_KEY = "droppoint_zone_name_seq";
 
   const zoneName = document.getElementById("dp-zone-name");
+  const appWrap = document.getElementById("dp-app-wrap");
   const renameRow = document.getElementById("dp-rename-row");
   const zoneInput = document.getElementById("dp-zone-input");
   const renameCancelBtn = document.getElementById("dp-rename-cancel");
@@ -1710,15 +1858,25 @@
   const clipUpBtn = document.getElementById("dp-clip-up");
   const clipNewFolderBtn = document.getElementById("dp-clip-new-folder");
   const clipViewToggleBtn = document.getElementById("dp-clip-view-toggle");
+  const modeNormalBtn = document.getElementById("dp-mode-normal");
+  const modeCompactBtn = document.getElementById("dp-mode-compact");
+  const modeMiniBtn = document.getElementById("dp-mode-mini");
   const clipBreadcrumbs = document.getElementById("dp-clip-breadcrumbs");
   const clearMissing = document.getElementById("dp-clear-missing");
   const folderColorPicker = document.getElementById("dp-folder-color-picker");
   const uploadArea = document.querySelector(".upload");
   const dragArea = document.getElementById("drag");
+  const dropRoot = document.getElementById("droppoint");
 
   const WIDGET_WIDTH = 360;
   const WIDGET_MIN_HEIGHT = 240;
   const WIDGET_MAX_SCREEN_RATIO = 0.7;
+  const WIDGET_COMPACT_WIDTH = 320;
+  const WIDGET_COMPACT_MIN_HEIGHT = 210;
+  const WIDGET_COMPACT_MAX_SCREEN_RATIO = 0.56;
+  const WIDGET_MINI_WIDTH = 230;
+  const WIDGET_MINI_HEIGHT = 246;
+  const DISPLAY_MODE_KEY = "droppoint_display_mode";
   const GALLERY_W = 800;
   const GALLERY_H = 600;
 
@@ -1734,6 +1892,7 @@
   let toastTimer = null;
   let selectedIds = new Set();
   let clipImageHoverTimer = null;
+  let displayMode = "normal";
 
   const DEFAULT_FOLDER_COLOR_KEY = "sky";
   const ROOT_FOLDER_COLOR_KEY = "slate";
@@ -1750,6 +1909,31 @@
 
   function fileNameFromPath(filePath) {
     return (filePath || "").replace(/\\/g, "/").split("/").pop() || filePath;
+  }
+
+  function normalizeDisplayMode(mode) {
+    return mode === "compact" || mode === "mini" ? mode : "normal";
+  }
+
+  function updateMiniLabel(files) {
+    if (!dropRoot) return;
+    const count = Array.isArray(files) ? files.length : 0;
+    dropRoot.dataset.miniLabel = count
+      ? `${count} item${count === 1 ? "" : "s"} loaded`
+      : "No items yet";
+  }
+
+  function setDisplayMode(nextMode) {
+    displayMode = normalizeDisplayMode(nextMode);
+    if (appWrap) {
+      appWrap.setAttribute("data-dp-mode", displayMode);
+    }
+    modeNormalBtn.classList.toggle("dp-active", displayMode === "normal");
+    modeCompactBtn.classList.toggle("dp-active", displayMode === "compact");
+    modeMiniBtn.classList.toggle("dp-active", displayMode === "mini");
+    localStorage.setItem(DISPLAY_MODE_KEY, displayMode);
+    updateMiniLabel(window.droppoint.getFiles());
+    resizeWidget();
   }
 
   function toFileUrl(filePath) {
@@ -2599,7 +2783,24 @@
   }
 
   function resizeWidget() {
+    if (overlay.classList.contains("dp-open") || clipboardOverlay.classList.contains("dp-open")) {
+      return;
+    }
+
     const count = window.droppoint.getFiles().length;
+    if (displayMode === "mini") {
+      window.electron.resizeWindow(WIDGET_MINI_WIDTH, WIDGET_MINI_HEIGHT);
+      return;
+    }
+
+    if (displayMode === "compact") {
+      const estimatedHeight = WIDGET_COMPACT_MIN_HEIGHT + Math.min(count, 10) * 44;
+      const maxHeight = Math.floor(window.screen.availHeight * WIDGET_COMPACT_MAX_SCREEN_RATIO);
+      const targetHeight = Math.min(estimatedHeight, maxHeight);
+      window.electron.resizeWindow(WIDGET_COMPACT_WIDTH, Math.max(WIDGET_COMPACT_MIN_HEIGHT, targetHeight));
+      return;
+    }
+
     const estimatedHeight = WIDGET_MIN_HEIGHT + Math.min(count, 10) * 56;
     const maxHeight = Math.floor(window.screen.availHeight * WIDGET_MAX_SCREEN_RATIO);
     const targetHeight = Math.min(estimatedHeight, maxHeight);
@@ -2608,6 +2809,7 @@
 
   function syncRendererView(files) {
     renderItems(files);
+    updateMiniLabel(files);
     updateSaveBtnState();
     resizeWidget();
   }
@@ -3259,6 +3461,18 @@
       showToast(`Folder created: ${name}`);
     });
 
+    modeNormalBtn.addEventListener("click", () => {
+      setDisplayMode("normal");
+    });
+
+    modeCompactBtn.addEventListener("click", () => {
+      setDisplayMode("compact");
+    });
+
+    modeMiniBtn.addEventListener("click", () => {
+      setDisplayMode("mini");
+    });
+
     closeBtn.addEventListener("click", () => {
       window.close();
     });
@@ -3478,6 +3692,7 @@
     galleryViewToggleBtn.textContent = "List";
     clipViewToggleBtn.textContent = "Grid";
     setupEvents();
+    setDisplayMode(normalizeDisplayMode(localStorage.getItem(DISPLAY_MODE_KEY)));
     syncRendererView(window.droppoint.getFiles());
   }
 
