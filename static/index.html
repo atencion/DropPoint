@@ -487,8 +487,49 @@
 
   #dp-memory-list.dp-clip-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    align-content: start;
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-memory-item {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    align-items: stretch;
+    min-height: 178px;
+    padding: 9px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 3px 10px rgba(5, 10, 15, 0.06);
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-memory-thumb {
+    width: 100%;
+    height: 92px;
+    border-radius: 8px;
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-memory-meta {
+    gap: 3px;
+    width: 100%;
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-memory-name {
+    font-size: 0.66rem;
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-memory-preview {
+    font-size: 0.58rem;
+  }
+
+  #dp-memory-list.dp-clip-grid .dp-memory-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    justify-content: stretch;
+    min-width: 0;
+    margin-top: auto;
   }
 
   #dp-memory-actions {
@@ -525,9 +566,21 @@
     color: rgb(8,145,178);
   }
 
+  .dp-clip-crumb.dp-drop-target-active {
+    background: rgba(8,145,178,0.22);
+    border-color: rgba(8,145,178,0.52);
+    color: rgb(8,145,178);
+  }
+
   .dp-memory-folder {
     border: 1px solid rgba(217, 119, 6, 0.3);
     background: rgba(217, 119, 6, 0.08);
+  }
+
+  .dp-memory-folder.dp-drop-target-active {
+    border-color: rgba(8,145,178,0.48);
+    background: rgba(8,145,178,0.14);
+    box-shadow: inset 0 0 0 1px rgba(8,145,178,0.18);
   }
 
   .dp-memory-drag-pill {
@@ -588,6 +641,8 @@
     padding: 6px;
     min-height: 52px;
     -webkit-app-region: no-drag;
+    position: relative;
+    overflow: hidden;
   }
 
   .dp-memory-item.dp-memory-selected {
@@ -644,6 +699,14 @@
   .dp-memory-actions {
     display: flex;
     gap: 4px;
+    min-width: 78px;
+    justify-content: flex-end;
+    position: relative;
+    z-index: 2;
+  }
+
+  .dp-memory-folder .dp-memory-actions {
+    min-width: 0;
   }
 
   .dp-mini-btn {
@@ -657,6 +720,9 @@
     font-weight: 700;
     padding: 3px 6px;
     cursor: pointer;
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
   }
 
   .dp-mini-btn:hover {
@@ -828,6 +894,12 @@
     color: rgb(8,145,178);
   }
 
+  .dp-crumb.dp-drop-target-active {
+    background: rgba(8,145,178,0.24);
+    border-color: rgba(8,145,178,0.52);
+    color: rgb(8,145,178);
+  }
+
   #dp-gallery-empty {
     display: flex;
     flex-direction: column;
@@ -914,6 +986,13 @@
     font-size: 0.8rem;
     color: #888;
     white-space: nowrap;
+  }
+
+  .dp-zone-card-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
   }
 
   .dp-zone-card-actions {
@@ -1008,6 +1087,12 @@
     background: rgba(8,145,178,0.04);
   }
 
+  .dp-zone-card.dp-drop-target-active {
+    border-color: rgba(8,145,178,0.56);
+    background: rgba(8,145,178,0.10);
+    box-shadow: 0 0 0 2px rgba(8,145,178,0.16);
+  }
+
   .dp-loaded-badge {
     font-size: 0.73rem;
     font-weight: 700;
@@ -1017,6 +1102,18 @@
     background: rgba(8,145,178,0.12);
     padding: 4px 10px;
     border-radius: 5px;
+  }
+
+  .dp-autosaved-badge {
+    font-size: 0.69rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #166534;
+    background: rgba(22,163,74,0.12);
+    border: 1px solid rgba(22,163,74,0.24);
+    padding: 3px 8px;
+    border-radius: 999px;
   }
 
   #dp-clipboard-overlay {
@@ -1333,6 +1430,69 @@
     return `${base} ${n}`;
   }
 
+  function hasTransferType(event, type) {
+    const types = event && event.dataTransfer && event.dataTransfer.types
+      ? Array.from(event.dataTransfer.types)
+      : [];
+    return types.includes(type);
+  }
+
+  function bindDropTarget(node, transferType, onDrop) {
+    let dragDepth = 0;
+
+    const clear = () => {
+      dragDepth = 0;
+      node.classList.remove("dp-drop-target-active");
+    };
+
+    node.addEventListener("dragenter", (event) => {
+      if (!hasTransferType(event, transferType)) return;
+      event.preventDefault();
+      dragDepth += 1;
+      node.classList.add("dp-drop-target-active");
+    });
+
+    node.addEventListener("dragover", (event) => {
+      if (!hasTransferType(event, transferType)) return;
+      event.preventDefault();
+      node.classList.add("dp-drop-target-active");
+    });
+
+    node.addEventListener("dragleave", () => {
+      if (!node.classList.contains("dp-drop-target-active")) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) {
+        node.classList.remove("dp-drop-target-active");
+      }
+    });
+
+    node.addEventListener("drop", async (event) => {
+      if (!hasTransferType(event, transferType)) return;
+      event.preventDefault();
+      clear();
+      await onDrop(event);
+    });
+  }
+
+  function confirmDanger(message) {
+    return window.confirm(message);
+  }
+
+  function isNameTakenInSiblings(name, entries, excludedId) {
+    const target = String(name || "").trim().toLowerCase();
+    if (!target) return false;
+    return entries.some((entry) => {
+      if (!entry || entry.id === excludedId) return false;
+      return String(entry.name || "").trim().toLowerCase() === target;
+    });
+  }
+
+  function isTypingTarget(target) {
+    if (!target) return false;
+    const tag = (target.tagName || "").toUpperCase();
+    return target.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+  }
+
   async function openTextPreview(item, title) {
     if (!item || getItemType(item) !== "text") return;
     let content = item.previewText || "";
@@ -1500,11 +1660,8 @@
         setCurrentClipFolder(crumb.id);
         renderItems(window.droppoint.getFiles());
       });
-      node.addEventListener("dragover", (event) => {
-        event.preventDefault();
-      });
-      node.addEventListener("drop", (event) => {
-        event.preventDefault();
+
+      bindDropTarget(node, "application/x-dp-item-ids", (event) => {
         const raw = event.dataTransfer.getData("application/x-dp-item-ids");
         if (!raw) return;
         const ids = JSON.parse(raw);
@@ -1514,6 +1671,7 @@
         window.droppoint.replaceItems(next);
         scheduleAutoSave();
       });
+
       clipBreadcrumbs.appendChild(node);
     });
   }
@@ -1532,16 +1690,72 @@
     childFolders.forEach((folder) => {
       const row = document.createElement("div");
       row.className = "dp-memory-item dp-memory-folder";
-      row.innerHTML = `<div class="dp-memory-thumb">DIR</div><div class="dp-memory-meta"><div class="dp-memory-name">${folder.name}</div><div class="dp-memory-preview">Folder</div></div><div class="dp-memory-actions"></div>`;
+
+      const thumb = document.createElement("div");
+      thumb.className = "dp-memory-thumb";
+      thumb.textContent = "DIR";
+
+      const meta = document.createElement("div");
+      meta.className = "dp-memory-meta";
+      const name = document.createElement("div");
+      name.className = "dp-memory-name";
+      name.textContent = folder.name;
+      const preview = document.createElement("div");
+      preview.className = "dp-memory-preview";
+      preview.textContent = "Folder";
+      meta.appendChild(name);
+      meta.appendChild(preview);
+
+      const actions = document.createElement("div");
+      actions.className = "dp-memory-actions";
+
+      const openBtn = document.createElement("button");
+      openBtn.className = "dp-mini-btn";
+      openBtn.textContent = "Open";
+      openBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        setCurrentClipFolder(folder.id);
+        renderItems(window.droppoint.getFiles());
+      });
+
+      const renameBtn = document.createElement("button");
+      renameBtn.className = "dp-mini-btn";
+      renameBtn.textContent = "Rename";
+      renameBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const proposed = window.prompt("Rename folder", folder.name);
+        if (proposed === null) return;
+        const nextName = proposed.trim();
+        if (!nextName) {
+          showToast("Folder name cannot be empty");
+          return;
+        }
+
+        const siblings = clipFolders.filter((entry) => entry.parentId === folder.parentId);
+        if (isNameTakenInSiblings(nextName, siblings, folder.id)) {
+          showToast("Folder name already exists");
+          return;
+        }
+
+        folder.name = nextName;
+        renderItems(window.droppoint.getFiles());
+        scheduleAutoSave();
+        showToast(`Folder renamed: ${nextName}`);
+      });
+
+      actions.appendChild(openBtn);
+      actions.appendChild(renameBtn);
+
+      row.appendChild(thumb);
+      row.appendChild(meta);
+      row.appendChild(actions);
+
       row.addEventListener("dblclick", () => {
         setCurrentClipFolder(folder.id);
         renderItems(window.droppoint.getFiles());
       });
-      row.addEventListener("dragover", (event) => {
-        event.preventDefault();
-      });
-      row.addEventListener("drop", (event) => {
-        event.preventDefault();
+
+      bindDropTarget(row, "application/x-dp-item-ids", (event) => {
         const raw = event.dataTransfer.getData("application/x-dp-item-ids");
         if (!raw) return;
         const ids = JSON.parse(raw);
@@ -1551,6 +1765,7 @@
         window.droppoint.replaceItems(next);
         scheduleAutoSave();
       });
+
       memoryList.appendChild(row);
     });
 
@@ -1609,6 +1824,9 @@
       delBtn.textContent = "Del";
       delBtn.addEventListener("click", (event) => {
         event.stopPropagation();
+        if (!confirmDanger(`Delete \"${item.displayName || fileNameFromPath(item.filepath)}\"?`)) {
+          return;
+        }
         const next = window.droppoint.getFiles().filter((entry) => entry.id !== item.id);
         window.droppoint.replaceItems(next);
         scheduleAutoSave();
@@ -1629,6 +1847,7 @@
       });
 
       dragBtn.addEventListener("dragstart", (event) => {
+        event.stopPropagation();
         event.preventDefault();
         const allItems = window.droppoint.getFiles();
         const intended = selectedIds.has(item.id)
@@ -1733,6 +1952,9 @@
   function createZoneCard(zone) {
     const card = document.createElement("div");
     card.className = "dp-zone-card";
+    if (loadedZoneId === zone.id) {
+      card.classList.add("dp-card-loaded");
+    }
     card.draggable = true;
     card.addEventListener("dragstart", (event) => {
       event.dataTransfer.setData("application/x-dp-zone-id", String(zone.id));
@@ -1748,6 +1970,24 @@
     const meta = document.createElement("div");
     meta.className = "dp-zone-card-meta";
     meta.textContent = `${(zone.files || []).length} item(s)`;
+
+    const info = document.createElement("div");
+    info.className = "dp-zone-card-info";
+    info.appendChild(meta);
+
+    if (loadedZoneId === zone.id) {
+      const loadedBadge = document.createElement("span");
+      loadedBadge.className = "dp-loaded-badge";
+      loadedBadge.textContent = "Loaded";
+      info.appendChild(loadedBadge);
+    }
+
+    if (zone.autosaved) {
+      const autosavedBadge = document.createElement("span");
+      autosavedBadge.className = "dp-autosaved-badge";
+      autosavedBadge.textContent = "Autosaved";
+      info.appendChild(autosavedBadge);
+    }
 
     const actions = document.createElement("div");
     actions.className = "dp-zone-card-actions";
@@ -1772,6 +2012,9 @@
     delBtn.className = "dp-card-btn dp-card-btn-delete";
     delBtn.textContent = "Delete";
     delBtn.addEventListener("click", async () => {
+      if (!confirmDanger(`Delete zone \"${zone.name}\"?`)) {
+        return;
+      }
       zones = zones.filter((entry) => entry.id !== zone.id);
       if (loadedZoneId === zone.id) loadedZoneId = null;
       await persistZones();
@@ -1782,7 +2025,7 @@
     actions.appendChild(delBtn);
 
     header.appendChild(name);
-    header.appendChild(meta);
+    header.appendChild(info);
     header.appendChild(actions);
 
     card.appendChild(header);
@@ -1856,12 +2099,33 @@
       renderGallery();
     });
 
-    card.addEventListener("dragover", (event) => {
-      event.preventDefault();
+    const renameBtn = document.createElement("button");
+    renameBtn.className = "dp-card-btn dp-card-btn-load";
+    renameBtn.textContent = "Rename";
+    renameBtn.addEventListener("click", async () => {
+      const proposed = window.prompt("Rename folder", folder.name);
+      if (proposed === null) return;
+      const nextName = proposed.trim();
+      if (!nextName) {
+        showToast("Folder name cannot be empty");
+        return;
+      }
+
+      const siblings = zones.filter(
+        (entry) => entry.type === "folder" && (entry.parentId || ROOT_FOLDER_ID) === (folder.parentId || ROOT_FOLDER_ID)
+      );
+      if (isNameTakenInSiblings(nextName, siblings, folder.id)) {
+        showToast("Folder name already exists");
+        return;
+      }
+
+      folder.name = nextName;
+      await persistZones();
+      renderGallery();
+      showToast(`Folder renamed: ${nextName}`);
     });
 
-    card.addEventListener("drop", async (event) => {
-      event.preventDefault();
+    bindDropTarget(card, "application/x-dp-zone-id", async (event) => {
       const draggedId = event.dataTransfer.getData("application/x-dp-zone-id");
       if (!draggedId || String(folder.id) === draggedId) return;
       const dragged = zones.find((entry) => String(entry.id) === draggedId);
@@ -1879,12 +2143,18 @@
         showToast("Folder not empty");
         return;
       }
+
+      if (!confirmDanger(`Delete folder \"${folder.name}\"?`)) {
+        return;
+      }
+
       zones = zones.filter((entry) => entry.id !== folder.id);
       await persistZones();
       renderGallery();
     });
 
     actions.appendChild(openBtn);
+    actions.appendChild(renameBtn);
     actions.appendChild(delBtn);
     header.appendChild(name);
     header.appendChild(meta);
@@ -1908,11 +2178,8 @@
         currentFolderId = crumb.id;
         renderGallery();
       });
-      btn.addEventListener("dragover", (event) => {
-        event.preventDefault();
-      });
-      btn.addEventListener("drop", async (event) => {
-        event.preventDefault();
+
+      bindDropTarget(btn, "application/x-dp-zone-id", async (event) => {
         const draggedId = event.dataTransfer.getData("application/x-dp-zone-id");
         if (!draggedId) return;
         const dragged = zones.find((entry) => String(entry.id) === draggedId);
@@ -1921,6 +2188,7 @@
         await persistZones();
         renderGallery();
       });
+
       galleryBreadcrumbs.appendChild(btn);
     });
   }
@@ -2116,6 +2384,9 @@
     });
 
     clearBtn.addEventListener("click", () => {
+      if (!confirmDanger("Clear this zone and reset all internal folders?")) {
+        return;
+      }
       window.droppoint.clearItems();
       selectedIds.clear();
       loadedZoneId = null;
@@ -2277,6 +2548,9 @@
     });
 
     clearMissing.addEventListener("click", async () => {
+      if (!confirmDanger("Remove all missing file references from this zone?")) {
+        return;
+      }
       const allItems = window.droppoint.getFiles();
       const kept = [];
       for (const item of allItems) {
@@ -2294,11 +2568,21 @@
         return;
       }
       if (event.key !== "Delete" && event.key !== "Backspace") return;
+      if (isTypingTarget(event.target) || isTypingTarget(document.activeElement)) return;
+
       const allItems = window.droppoint.getFiles();
+      const selectedItems = allItems.filter((item) => selectedIds.has(item.id));
+      if (!selectedItems.length) return;
+
+      event.preventDefault();
+      if (!confirmDanger(`Delete ${selectedItems.length} selected item(s)?`)) {
+        return;
+      }
+
       const kept = allItems.filter((item) => !selectedIds.has(item.id));
-      if (kept.length === allItems.length) return;
       window.droppoint.replaceItems(kept);
       selectedIds.clear();
+      scheduleAutoSave();
     });
 
     window.droppoint.subscribe((files) => {
