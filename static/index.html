@@ -1314,6 +1314,16 @@
     }, 900);
   }
 
+  function nextFolderName(existingNames, base = "New Folder") {
+    const taken = new Set((existingNames || []).map((name) => String(name || "").toLowerCase()));
+    if (!taken.has(base.toLowerCase())) return base;
+    let n = 2;
+    while (taken.has(`${base} ${n}`.toLowerCase())) {
+      n += 1;
+    }
+    return `${base} ${n}`;
+  }
+
   async function openTextPreview(item, title) {
     if (!item || getItemType(item) !== "text") return;
     let content = item.previewText || "";
@@ -2120,15 +2130,19 @@
     });
 
     clipNewFolderBtn.addEventListener("click", () => {
-      const name = window.prompt("Folder name", "New Folder");
-      if (!name) return;
+      const name = nextFolderName(
+        clipFolders
+          .filter((folder) => folder.parentId === currentClipFolderId)
+          .map((folder) => folder.name)
+      );
       clipFolders.push({
         id: `clip-folder-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        name: name.trim() || "New Folder",
+        name,
         parentId: currentClipFolderId,
       });
       renderItems(window.droppoint.getFiles());
       scheduleAutoSave();
+      showToast(`Folder created: ${name}`);
     });
 
     closeBtn.addEventListener("click", () => {
@@ -2198,17 +2212,25 @@
     });
 
     galleryNewFolderBtn.addEventListener("click", async () => {
-      const name = window.prompt("Folder name", "New Folder");
-      if (!name) return;
+      const name = nextFolderName(
+        zones
+          .filter(
+            (entry) =>
+              entry.type === "folder" &&
+              (entry.parentId || ROOT_FOLDER_ID) === currentFolderId
+          )
+          .map((entry) => entry.name)
+      );
       zones.unshift({
         id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         type: "folder",
-        name: name.trim() || "New Folder",
+        name,
         parentId: currentFolderId,
         createdAt: new Date().toISOString(),
       });
       await persistZones();
       renderGallery();
+      showToast(`Folder created: ${name}`);
     });
 
     document.addEventListener("paste", handlePaste);
