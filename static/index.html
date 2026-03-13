@@ -370,7 +370,7 @@
     gap: 6px;
     flex-wrap: wrap;
     justify-content: flex-start;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
     align-items: center;
   }
 
@@ -391,6 +391,8 @@
     text-transform: none;
     -webkit-app-region: no-drag;
     min-height: 28px;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .dp-btn svg {
@@ -511,12 +513,17 @@
     color: #050a0fa2;
     user-select: none;
     border: 2px transparent solid;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
     transition: all 0.5s ease-in-out;
     display: flex;
     flex-direction: column;
     padding: 6px;
     gap: 6px;
+  }
+
+  #droppoint .upload,
+  #droppoint #drag {
+    -webkit-app-region: no-drag;
   }
 
   .upload {
@@ -559,7 +566,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 2px;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
     overscroll-behavior: contain;
   }
 
@@ -630,7 +637,7 @@
     display: flex;
     gap: 6px;
     align-items: center;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
     flex-wrap: wrap;
     padding: 2px 0 1px;
   }
@@ -639,7 +646,7 @@
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
   }
 
   .dp-clip-crumb {
@@ -655,6 +662,9 @@
     letter-spacing: 0.04em;
     padding: 3px 8px;
     cursor: pointer;
+    -webkit-app-region: no-drag;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .dp-clip-crumb.dp-clip-crumb-active {
@@ -824,6 +834,7 @@
     color: var(--dp-accent-strong);
     cursor: grab;
     user-select: none;
+    -webkit-user-select: none;
     -webkit-app-region: no-drag;
   }
 
@@ -842,6 +853,8 @@
     background: rgba(19, 34, 53, 0.06);
     color: var(--dp-ink);
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
     -webkit-app-region: no-drag;
   }
 
@@ -861,6 +874,8 @@
     background: rgba(180, 35, 45, 0.08);
     color: var(--dp-danger);
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
     -webkit-app-region: no-drag;
   }
 
@@ -977,6 +992,9 @@
     position: relative;
     z-index: 2;
     pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-app-region: no-drag;
   }
 
   .dp-mini-btn:hover {
