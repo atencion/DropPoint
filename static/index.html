@@ -511,7 +511,7 @@
     color: #050a0fa2;
     user-select: none;
     border: 2px transparent solid;
-    -webkit-app-region: drag;
+    -webkit-app-region: no-drag;
     transition: all 0.5s ease-in-out;
     display: flex;
     flex-direction: column;
@@ -560,6 +560,23 @@
     overflow-x: hidden;
     padding-right: 2px;
     -webkit-app-region: no-drag;
+    overscroll-behavior: contain;
+  }
+
+  .dp-empty-drop-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px dashed rgba(15, 118, 110, 0.34);
+    border-radius: 10px;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.66), rgba(236, 253, 245, 0.42));
+    color: #1f6d63;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    min-height: 120px;
+    padding: 10px;
   }
 
   #dp-memory-list.dp-clip-grid {
@@ -1040,6 +1057,11 @@
     padding: 2px 5px;
   }
 
+  #dp-app-wrap[data-dp-mode="compact"] .dp-empty-drop-state {
+    min-height: 102px;
+    font-size: 0.62rem;
+  }
+
   #dp-app-wrap[data-dp-mode="mini"] #dp-btn-group,
   #dp-app-wrap[data-dp-mode="mini"] #dp-memory-actions,
   #dp-app-wrap[data-dp-mode="mini"] #dp-clip-breadcrumbs,
@@ -1071,6 +1093,7 @@
     justify-content: center;
     padding: 0;
     gap: 0;
+    cursor: copy;
   }
 
   #dp-app-wrap[data-dp-mode="mini"] #droppoint > * {
@@ -1083,6 +1106,7 @@
     font-weight: 800;
     color: #12564d;
     letter-spacing: 0.02em;
+    pointer-events: none;
   }
 
   #dp-app-wrap[data-dp-mode="mini"] #droppoint::after {
@@ -1095,6 +1119,7 @@
     font-weight: 700;
     color: #5b6878;
     white-space: nowrap;
+    pointer-events: none;
   }
 
   .file-icon {
@@ -1853,6 +1878,8 @@
   const toast = document.getElementById("dp-toast");
   const memoryList = document.getElementById("dp-memory-list");
   const dropHint = document.getElementById("dp-drop-hint");
+  const toolbar = document.getElementById("dp-toolbar");
+  const memoryActionsBar = document.getElementById("dp-memory-actions");
   const dragSelected = document.getElementById("dp-drag-selected");
   const dragAll = document.getElementById("dp-drag-all");
   const clipUpBtn = document.getElementById("dp-clip-up");
@@ -1869,11 +1896,11 @@
   const dropRoot = document.getElementById("droppoint");
 
   const WIDGET_WIDTH = 360;
-  const WIDGET_MIN_HEIGHT = 240;
-  const WIDGET_MAX_SCREEN_RATIO = 0.7;
+  const WIDGET_MIN_HEIGHT = 300;
+  const WIDGET_MAX_SCREEN_RATIO = 0.82;
   const WIDGET_COMPACT_WIDTH = 320;
-  const WIDGET_COMPACT_MIN_HEIGHT = 210;
-  const WIDGET_COMPACT_MAX_SCREEN_RATIO = 0.56;
+  const WIDGET_COMPACT_MIN_HEIGHT = 260;
+  const WIDGET_COMPACT_MAX_SCREEN_RATIO = 0.72;
   const WIDGET_MINI_WIDTH = 230;
   const WIDGET_MINI_HEIGHT = 246;
   const DISPLAY_MODE_KEY = "droppoint_display_mode";
@@ -2634,9 +2661,9 @@
       memoryList.appendChild(row);
     });
 
-    files
-      .filter((entry) => (entry.parentClipFolderId || CLIP_ROOT_ID) === currentClipFolderId)
-      .forEach((item) => {
+    const visibleItems = files.filter((entry) => (entry.parentClipFolderId || CLIP_ROOT_ID) === currentClipFolderId);
+
+    visibleItems.forEach((item) => {
       const row = document.createElement("div");
       row.className = "dp-memory-item";
       row.draggable = true;
@@ -2777,6 +2804,13 @@
       memoryList.appendChild(row);
     });
 
+    if (!childFolders.length && !visibleItems.length) {
+      const empty = document.createElement("div");
+      empty.className = "dp-empty-drop-state";
+      empty.textContent = "Drop files here or paste with Ctrl+V";
+      memoryList.appendChild(empty);
+    }
+
     dropHint.textContent = files.length
       ? "Keep dropping more files or paste with Ctrl+V"
       : "Drop files or paste text/images with Ctrl+V";
@@ -2794,14 +2828,28 @@
     }
 
     if (displayMode === "compact") {
-      const estimatedHeight = WIDGET_COMPACT_MIN_HEIGHT + Math.min(count, 10) * 44;
+      const toolbarHeight = toolbar ? toolbar.offsetHeight : 58;
+      const actionsHeight = memoryActionsBar ? memoryActionsBar.offsetHeight : 34;
+      const crumbsHeight = clipBreadcrumbs ? clipBreadcrumbs.offsetHeight : 24;
+      const hintHeight = dropHint ? dropHint.offsetHeight : 30;
+      const listHeight = count > 0
+        ? 18 + Math.min(Math.max(count, 1), 5) * 52
+        : 124;
+      const estimatedHeight = toolbarHeight + actionsHeight + crumbsHeight + hintHeight + listHeight + 30;
       const maxHeight = Math.floor(window.screen.availHeight * WIDGET_COMPACT_MAX_SCREEN_RATIO);
       const targetHeight = Math.min(estimatedHeight, maxHeight);
       window.electron.resizeWindow(WIDGET_COMPACT_WIDTH, Math.max(WIDGET_COMPACT_MIN_HEIGHT, targetHeight));
       return;
     }
 
-    const estimatedHeight = WIDGET_MIN_HEIGHT + Math.min(count, 10) * 56;
+    const toolbarHeight = toolbar ? toolbar.offsetHeight : 62;
+    const actionsHeight = memoryActionsBar ? memoryActionsBar.offsetHeight : 36;
+    const crumbsHeight = clipBreadcrumbs ? clipBreadcrumbs.offsetHeight : 24;
+    const hintHeight = dropHint ? dropHint.offsetHeight : 30;
+    const listHeight = count > 0
+      ? 20 + Math.min(Math.max(count, 1), 6) * 58
+      : 146;
+    const estimatedHeight = toolbarHeight + actionsHeight + crumbsHeight + hintHeight + listHeight + 34;
     const maxHeight = Math.floor(window.screen.availHeight * WIDGET_MAX_SCREEN_RATIO);
     const targetHeight = Math.min(estimatedHeight, maxHeight);
     window.electron.resizeWindow(WIDGET_WIDTH, Math.max(WIDGET_MIN_HEIGHT, targetHeight));
