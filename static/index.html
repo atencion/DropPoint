@@ -91,12 +91,12 @@
         Drag Your <num></num> File(s) Out
       </div>
       <div id="dp-memory-actions">
-        <button id="dp-clip-up" class="dp-memory-clear-btn" style="margin-left:0">Up</button>
-        <button id="dp-clip-new-folder" class="dp-memory-clear-btn" style="margin-left:0">New folder</button>
-        <button id="dp-clip-view-toggle" class="dp-memory-clear-btn" style="margin-left:0">Grid</button>
+        <button id="dp-clip-up" class="dp-memory-tool-btn">Up</button>
+        <button id="dp-clip-new-folder" class="dp-memory-tool-btn">New folder</button>
+        <button id="dp-clip-view-toggle" class="dp-memory-tool-btn">Grid</button>
         <div id="dp-drag-selected" class="dp-memory-drag-pill" draggable="true">Drag selected</div>
         <div id="dp-drag-all" class="dp-memory-drag-pill" draggable="true">Drag all</div>
-        <button id="dp-clear-missing" class="dp-memory-clear-btn">Clear missing</button>
+        <button id="dp-clear-missing" class="dp-memory-danger-btn">Clear missing</button>
       </div>
       <div id="dp-clip-breadcrumbs"></div>
       <div id="dp-memory-list"></div>
@@ -161,6 +161,22 @@
     </div>
   </div>
 
+  <div id="dp-image-preview-overlay">
+    <div id="dp-image-preview-panel">
+      <div id="dp-image-preview-header">
+        <div id="dp-image-preview-title">Image Preview</div>
+        <button id="dp-image-preview-close" title="Close Preview">&times;</button>
+      </div>
+      <div id="dp-image-preview-body-wrap">
+        <img id="dp-image-preview-body" alt="Clipboard preview" />
+      </div>
+    </div>
+  </div>
+
+  <div id="dp-clip-image-hover" aria-hidden="true">
+    <img id="dp-clip-image-hover-img" alt="Clipboard image quick preview" />
+  </div>
+
 </body>
 
 <!-- ══════════════════ STYLES ══════════════════ -->
@@ -202,6 +218,16 @@
     overflow: hidden;
   }
 
+  :root {
+    --dp-ink: #132235;
+    --dp-muted-ink: #5b6878;
+    --dp-line: rgba(19, 34, 53, 0.14);
+    --dp-surface: rgba(255, 252, 246, 0.92);
+    --dp-accent: #0f766e;
+    --dp-accent-strong: #115e59;
+    --dp-danger: #b4232d;
+  }
+
   body {
     width: 100%;
     height: 100%;
@@ -217,11 +243,13 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    padding: 7px 8px 6px 10px;
+    padding: 8px 10px 7px;
     -webkit-app-region: drag;
     flex-shrink: 0;
-    gap: 6px;
-    min-height: 44px;
+    gap: 7px;
+    min-height: 48px;
+    border-bottom: 1px solid var(--dp-line);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.18));
   }
 
   #dp-toolbar-head {
@@ -231,9 +259,9 @@
   }
 
   #dp-zone-name {
-    font-size: 0.66rem;
-    font-weight: 700;
-    color: #223041;
+    font-size: 0.74rem;
+    font-weight: 750;
+    color: var(--dp-ink);
     cursor: default;
     white-space: nowrap;
     overflow: hidden;
@@ -241,12 +269,12 @@
     max-width: 180px;
     flex: 1;
     -webkit-app-region: no-drag;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.005em;
     transition: color 0.2s;
   }
 
   #dp-zone-name:hover {
-    color: #050a0f;
+    color: #0a1626;
   }
 
   #dp-zone-input {
@@ -303,28 +331,30 @@
 
   #dp-btn-group {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     flex-wrap: wrap;
     justify-content: flex-start;
     -webkit-app-region: no-drag;
+    align-items: center;
   }
 
   .dp-btn {
     display: flex;
     align-items: center;
-    gap: 3px;
-    font-size: 0.56rem;
+    gap: 5px;
+    font-size: 0.62rem;
     font-weight: 600;
-    letter-spacing: 0.02em;
-    padding: 3px 7px;
-    border-radius: 4px;
-    border: none;
+    letter-spacing: 0.01em;
+    padding: 5px 9px;
+    border-radius: 7px;
+    border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.15s ease;
     font-family: inherit;
     line-height: 1;
-    text-transform: uppercase;
+    text-transform: none;
     -webkit-app-region: no-drag;
+    min-height: 28px;
   }
 
   .dp-btn svg {
@@ -332,18 +362,20 @@
   }
 
   .dp-btn-save {
-    background: rgba(5,10,15,0.08);
-    color: #050a0fa0;
+    background: rgba(19, 34, 53, 0.06);
+    color: var(--dp-muted-ink);
+    border-color: var(--dp-line);
   }
 
   .dp-btn-save:hover {
-    background: rgba(5,10,15,0.16);
-    color: #050a0f;
+    background: rgba(19, 34, 53, 0.12);
+    color: var(--dp-ink);
   }
 
   .dp-btn-save.dp-has-files {
-    background: rgba(22, 163, 74, 0.12);
-    color: rgb(22, 163, 74);
+    background: rgba(22, 163, 74, 0.14);
+    color: #166534;
+    border-color: rgba(22, 163, 74, 0.28);
   }
 
   .dp-btn-save.dp-has-files:hover {
@@ -351,70 +383,77 @@
   }
 
   .dp-btn-gallery {
-    background: rgba(5,10,15,0.08);
-    color: #050a0fa0;
+    background: rgba(19, 34, 53, 0.06);
+    color: var(--dp-muted-ink);
+    border-color: var(--dp-line);
   }
 
   .dp-btn-gallery:hover {
-    background: rgba(5,10,15,0.16);
-    color: #050a0f;
+    background: rgba(19, 34, 53, 0.12);
+    color: var(--dp-ink);
   }
 
   .dp-btn-gallery.dp-has-saved {
-    background: rgba(8,145,178,0.12);
-    color: rgb(8,145,178);
+    background: rgba(15, 118, 110, 0.14);
+    color: var(--dp-accent-strong);
+    border-color: rgba(15, 118, 110, 0.28);
   }
 
   .dp-btn-gallery.dp-has-saved:hover {
-    background: rgba(8,145,178,0.22);
+    background: rgba(15, 118, 110, 0.24);
   }
 
   .dp-btn-clipboard {
-    background: rgba(87, 83, 221, 0.1);
-    color: #524ec6;
+    background: rgba(19, 34, 53, 0.06);
+    color: var(--dp-muted-ink);
+    border-color: var(--dp-line);
   }
 
   .dp-btn-clipboard:hover {
-    background: rgba(87, 83, 221, 0.18);
-    color: #423eac;
+    background: rgba(19, 34, 53, 0.12);
+    color: var(--dp-ink);
   }
 
   .dp-btn-new {
-    background: rgba(5,10,15,0.08);
-    color: #050a0fa0;
+    background: rgba(15, 118, 110, 0.16);
+    color: var(--dp-accent-strong);
+    border-color: rgba(15, 118, 110, 0.28);
   }
 
   .dp-btn-new:hover {
-    background: rgba(5,10,15,0.16);
-    color: #050a0f;
+    background: rgba(15, 118, 110, 0.24);
+    color: #134e4a;
   }
 
   .dp-btn-clear {
-    background: rgba(224,82,82,0.08);
-    color: #d74a4a;
+    background: rgba(180, 35, 45, 0.08);
+    color: var(--dp-danger);
+    border-color: rgba(180, 35, 45, 0.24);
+    margin-left: auto;
   }
 
   .dp-btn-clear:hover {
-    background: rgba(224,82,82,0.18);
-    color: #bf3030;
+    background: rgba(180, 35, 45, 0.16);
+    color: #8f1921;
   }
 
   .dp-btn-close {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 999px;
     padding: 0;
     font-size: 0.85rem;
     line-height: 1;
-    background: rgba(5,10,15,0.07);
-    color: #5d6979;
+    background: rgba(19, 34, 53, 0.08);
+    color: var(--dp-muted-ink);
+    border: 1px solid rgba(19, 34, 53, 0.08);
     justify-content: center;
     -webkit-app-region: no-drag;
   }
 
   .dp-btn-close:hover {
-    background: rgba(224,82,82,0.2);
-    color: #bf3030;
+    background: rgba(180, 35, 45, 0.14);
+    color: #8f1921;
   }
 
   /* ── DROP ZONE ────────────────────────────────── */
@@ -457,7 +496,8 @@
     justify-content: center;
   }
 
-  img {
+  .upload img,
+  .file-icon img {
     max-width: 60px;
     padding: 8px;
   }
@@ -539,6 +579,7 @@
     align-items: center;
     -webkit-app-region: no-drag;
     flex-wrap: wrap;
+    padding: 2px 0 1px;
   }
 
   #dp-clip-breadcrumbs {
@@ -719,15 +760,15 @@
   }
 
   .dp-memory-drag-pill {
-    border: 1px solid rgba(5, 10, 15, 0.2);
+    border: 1px solid rgba(15, 118, 110, 0.32);
     border-radius: 999px;
-    padding: 4px 9px;
-    font-size: 0.58rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    font-size: 0.61rem;
+    text-transform: none;
+    letter-spacing: 0.02em;
     font-weight: 700;
-    background: rgba(255, 255, 255, 0.72);
-    color: #23303f;
+    background: rgba(15, 118, 110, 0.1);
+    color: var(--dp-accent-strong);
     cursor: grab;
     user-select: none;
     -webkit-app-region: no-drag;
@@ -737,23 +778,48 @@
     cursor: grabbing;
   }
 
-  .dp-memory-clear-btn {
-    margin-left: auto;
-    border: 1px solid rgba(224, 82, 82, 0.24);
+  .dp-memory-tool-btn {
+    border: 1px solid var(--dp-line);
     border-radius: 999px;
-    padding: 4px 9px;
-    font-size: 0.58rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    font-size: 0.61rem;
+    text-transform: none;
+    letter-spacing: 0.02em;
     font-weight: 700;
-    background: rgba(224, 82, 82, 0.08);
-    color: #c53f3f;
+    background: rgba(19, 34, 53, 0.06);
+    color: var(--dp-ink);
     cursor: pointer;
     -webkit-app-region: no-drag;
   }
 
-  .dp-memory-clear-btn:hover {
-    background: rgba(224, 82, 82, 0.15);
+  .dp-memory-tool-btn:hover {
+    background: rgba(19, 34, 53, 0.12);
+  }
+
+  .dp-memory-danger-btn {
+    margin-left: auto;
+    border: 1px solid rgba(180, 35, 45, 0.24);
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 0.61rem;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-weight: 700;
+    background: rgba(180, 35, 45, 0.08);
+    color: var(--dp-danger);
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+  }
+
+  .dp-memory-danger-btn:hover {
+    background: rgba(180, 35, 45, 0.16);
+  }
+
+  @media (max-width: 440px) {
+    .dp-btn-clear,
+    .dp-memory-danger-btn {
+      margin-left: 0;
+    }
   }
 
   #dp-memory-list::-webkit-scrollbar {
@@ -926,13 +992,6 @@
   }
 
   /* ── GALLERY OVERLAY ──────────────────────────── */
-  :root {
-    --dp-gallery-surface: rgba(255, 255, 255, 0.86);
-    --dp-gallery-border: rgba(5, 10, 15, 0.1);
-    --dp-gallery-muted: #6f7b8c;
-    --dp-gallery-title: #101926;
-  }
-
   #dp-gallery-overlay {
     display: none;
     position: fixed;
@@ -1065,16 +1124,16 @@
 
   #dp-gallery-list {
     overflow-y: auto;
-    padding: 18px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
 
   #dp-gallery-list.dp-gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
   }
 
   #dp-gallery-list::-webkit-scrollbar {
@@ -1092,66 +1151,64 @@
 
   /* ── GALLERY ZONE CARD ────────────────────────── */
   .dp-zone-card {
-    background: var(--dp-gallery-surface);
-    border: 1px solid var(--dp-gallery-border);
+    background: rgba(255,255,255,0.80);
+    border: 1px solid rgba(5,10,15,0.09);
     border-radius: 12px;
-    padding: 16px;
+    padding: 18px 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+    gap: 12px;
+    transition: box-shadow 0.15s, border-color 0.15s;
   }
 
   .dp-zone-card:hover {
-    box-shadow: 0 8px 22px rgba(0,0,0,0.10);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.10);
     border-color: rgba(5,10,15,0.16);
-    transform: translateY(-1px);
   }
 
   .dp-zone-card-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "name actions"
-      "meta actions";
-    gap: 8px 12px;
-    align-items: start;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .dp-zone-card-name {
-    grid-area: name;
     font-size: 1rem;
     font-weight: 700;
-    color: var(--dp-gallery-title);
-    white-space: normal;
-    line-height: 1.2;
+    color: #050a0f;
+    flex: 1;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
+  .dp-editable-name {
+    cursor: text;
+  }
+
+  .dp-editable-name:hover {
+    color: #0f172a;
+  }
+
   .dp-zone-card-meta {
     font-size: 0.8rem;
-    color: var(--dp-gallery-muted);
+    color: #888;
     white-space: nowrap;
   }
 
   .dp-zone-card-info {
-    grid-area: meta;
     display: flex;
     align-items: center;
     gap: 6px;
-    flex-wrap: wrap;
     min-width: 0;
   }
 
   .dp-zone-card-actions {
-    grid-area: actions;
     display: flex;
     gap: 7px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
     flex-shrink: 0;
-    align-items: flex-start;
+    align-items: center;
   }
 
   .dp-card-btn {
@@ -1166,7 +1223,6 @@
     transition: all 0.15s;
     font-family: inherit;
     line-height: 1.4;
-    white-space: nowrap;
   }
 
   .dp-card-btn-load {
@@ -1193,8 +1249,8 @@
 
   /* ── GALLERY FILE LIST ─────────────────────────── */
   .dp-zone-files {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 7px;
   }
 
@@ -1208,8 +1264,7 @@
     border: 1px solid rgba(5,10,15,0.08);
     border-radius: 6px;
     padding: 5px 11px;
-    max-width: 100%;
-    min-width: 0;
+    max-width: 300px;
   }
 
   .dp-file-chip-icon {
@@ -1223,11 +1278,47 @@
     text-overflow: ellipsis;
   }
 
-  .dp-file-chip-more {
-    justify-content: center;
-    color: #516071;
-    background: rgba(5,10,15,0.03);
-    border-style: dashed;
+  .dp-inline-edit-hidden {
+    display: none !important;
+  }
+
+  .dp-inline-edit-input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(8,145,178,0.38);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.97);
+    color: #0f172a;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: 1.25;
+    padding: 4px 8px;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(8,145,178,0.14);
+  }
+
+  .dp-inline-edit-input.dp-inline-edit-input-invalid {
+    border-color: rgba(224,82,82,0.45);
+    box-shadow: 0 0 0 2px rgba(224,82,82,0.16);
+  }
+
+  .dp-inline-edit-error {
+    margin-top: 4px;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    color: #b4232f;
+    display: none;
+  }
+
+  .dp-zone-card-name + .dp-inline-edit-input {
+    max-width: 320px;
+  }
+
+  .dp-file-chip-name + .dp-inline-edit-input {
+    max-width: 100%;
+    font-size: 0.8rem;
+    padding: 2px 6px;
   }
 
   .dp-zone-no-files {
@@ -1238,33 +1329,8 @@
 
   .dp-zone-card-date {
     font-size: 0.76rem;
-    color: #9aa3af;
+    color: #aaa;
     margin-top: 2px;
-  }
-
-  #dp-gallery-list.dp-gallery-grid .dp-zone-card-header {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "name"
-      "meta"
-      "actions";
-  }
-
-  #dp-gallery-list.dp-gallery-grid .dp-zone-card-actions {
-    justify-content: flex-start;
-  }
-
-  #dp-gallery-list.dp-gallery-grid .dp-zone-card-actions .dp-card-btn {
-    flex: 1 1 calc(50% - 7px);
-    text-align: center;
-  }
-
-  #dp-gallery-list.dp-gallery-grid .dp-zone-files {
-    grid-template-columns: 1fr;
-  }
-
-  #dp-gallery-list.dp-gallery-grid .dp-zone-card-name {
-    font-size: 0.96rem;
   }
 
   /* ── LOADED ZONE INDICATOR ─────────────────────── */
@@ -1302,50 +1368,6 @@
     border-radius: 999px;
   }
 
-  @media (max-width: 760px) {
-    #dp-gallery-panel {
-      width: min(96vw, 720px);
-      max-height: 94vh;
-    }
-
-    #dp-gallery-header {
-      padding: 18px 16px 14px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    #dp-gallery-controls {
-      margin-left: 0;
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    #dp-gallery-close {
-      margin-left: auto;
-    }
-
-    #dp-gallery-list {
-      padding: 12px;
-    }
-
-    #dp-gallery-list.dp-gallery-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .dp-zone-card {
-      padding: 14px;
-    }
-
-    .dp-zone-files {
-      grid-template-columns: 1fr;
-    }
-
-    .dp-zone-card-actions {
-      justify-content: flex-start;
-    }
-  }
 
   #dp-clipboard-overlay {
     display: none;
@@ -1408,6 +1430,37 @@
     gap: 8px;
   }
 
+  #dp-clip-image-hover {
+    display: none;
+    position: fixed;
+    z-index: 1003;
+    width: 360px;
+    height: 280px;
+    max-width: 62vw;
+    max-height: 56vh;
+    background: rgba(248,251,255,0.98);
+    border: 1px solid rgba(8,145,178,0.3);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(5,10,15,0.24);
+    padding: 2px;
+    pointer-events: none;
+  }
+
+  #dp-clip-image-hover.dp-open {
+    display: block;
+  }
+
+  #dp-clip-image-hover img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-width: none;
+    padding: 0;
+    display: block;
+    border-radius: 7px;
+    background: rgba(5,10,15,0.03);
+  }
+
   .dp-clip-item {
     border: 1px solid rgba(5,10,15,0.1);
     border-radius: 10px;
@@ -1417,14 +1470,6 @@
     grid-template-columns: 42px 1fr auto;
     gap: 8px;
     align-items: center;
-    transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
-  }
-
-  .dp-clip-item:hover,
-  .dp-clip-item:focus-within {
-    border-color: rgba(8,145,178,0.26);
-    box-shadow: 0 4px 14px rgba(5,10,15,0.08);
-    background: rgba(255,255,255,0.96);
   }
 
   .dp-clip-thumb {
@@ -1439,15 +1484,16 @@
     font-size: 0.65rem;
     font-weight: 700;
     color: #4f5c6c;
-    transition: transform 0.16s ease, box-shadow 0.16s ease;
   }
 
   .dp-clip-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    max-width: none;
+    padding: 0;
+    display: block;
     pointer-events: none;
-    transition: transform 0.16s ease;
   }
 
   .dp-clip-meta {
@@ -1466,64 +1512,12 @@
     text-overflow: ellipsis;
   }
 
-  .dp-clip-item-image .dp-clip-name {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    white-space: normal;
-    line-height: 1.24;
-    max-height: 1em;
-    transition: max-height 0.16s ease, font-size 0.16s ease;
-  }
-
-  .dp-clip-item-image:hover .dp-clip-name,
-  .dp-clip-item-image:focus-within .dp-clip-name {
-    -webkit-line-clamp: 2;
-    max-height: 2.5em;
-    font-size: 0.7rem;
-  }
-
-  .dp-clip-item-image:hover .dp-clip-thumb,
-  .dp-clip-item-image:focus-within .dp-clip-thumb {
-    transform: scale(1.08);
-    box-shadow: 0 4px 10px rgba(5,10,15,0.14);
-  }
-
-  .dp-clip-item-image:hover .dp-clip-thumb img,
-  .dp-clip-item-image:focus-within .dp-clip-thumb img {
-    transform: scale(1.08);
-  }
-
   .dp-clip-preview {
     font-size: 0.6rem;
     color: #6b7889;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .dp-clip-item-text .dp-clip-preview {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    white-space: normal;
-    line-height: 1.25;
-    max-height: 1em;
-    transition: max-height 0.16s ease, font-size 0.16s ease, color 0.16s ease;
-  }
-
-  .dp-clip-item-text:hover .dp-clip-preview,
-  .dp-clip-item-text:focus-within .dp-clip-preview {
-    -webkit-line-clamp: 3;
-    max-height: 3.9em;
-    font-size: 0.64rem;
-    color: #4f5c6c;
-  }
-
-  .dp-clip-view-btn {
-    font-size: 0.68rem;
-    padding: 5px 10px;
-    letter-spacing: 0.035em;
   }
 
   #dp-text-preview-overlay {
@@ -1590,6 +1584,79 @@
     background: rgba(255,255,255,0.92);
     min-height: 220px;
   }
+
+  #dp-image-preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1003;
+    background: rgba(6, 10, 16, 0.62);
+    backdrop-filter: blur(3px);
+    -webkit-app-region: no-drag;
+  }
+
+  #dp-image-preview-overlay.dp-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #dp-image-preview-panel {
+    width: min(94vw, 860px);
+    max-height: 88vh;
+    background: #fdfcf9;
+    border: 1px solid rgba(5,10,15,0.12);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #dp-image-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(5,10,15,0.08);
+  }
+
+  #dp-image-preview-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #223041;
+  }
+
+  #dp-image-preview-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(5,10,15,0.08);
+    color: #4f5c6c;
+    cursor: pointer;
+  }
+
+  #dp-image-preview-body-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    min-height: 180px;
+    max-height: calc(88vh - 52px);
+  }
+
+  #dp-image-preview-body {
+    max-width: 100%;
+    max-height: calc(88vh - 80px);
+    object-fit: contain;
+    padding: 0;
+    display: block;
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(5,10,15,0.16);
+    background: rgba(5,10,15,0.03);
+  }
 </style>
 
 <!-- ══════════════════ EXISTING DROPPOINT RENDERER ══════════════════ -->
@@ -1629,6 +1696,12 @@
   const textPreviewCloseBtn = document.getElementById("dp-text-preview-close");
   const textPreviewTitle = document.getElementById("dp-text-preview-title");
   const textPreviewBody = document.getElementById("dp-text-preview-body");
+  const imagePreviewOverlay = document.getElementById("dp-image-preview-overlay");
+  const imagePreviewCloseBtn = document.getElementById("dp-image-preview-close");
+  const imagePreviewTitle = document.getElementById("dp-image-preview-title");
+  const imagePreviewBody = document.getElementById("dp-image-preview-body");
+  const clipImageHover = document.getElementById("dp-clip-image-hover");
+  const clipImageHoverImg = document.getElementById("dp-clip-image-hover-img");
   const toast = document.getElementById("dp-toast");
   const memoryList = document.getElementById("dp-memory-list");
   const dropHint = document.getElementById("dp-drop-hint");
@@ -1660,6 +1733,7 @@
   let autosaveTimer = null;
   let toastTimer = null;
   let selectedIds = new Set();
+  let clipImageHoverTimer = null;
 
   const DEFAULT_FOLDER_COLOR_KEY = "sky";
   const ROOT_FOLDER_COLOR_KEY = "slate";
@@ -1676,6 +1750,13 @@
 
   function fileNameFromPath(filePath) {
     return (filePath || "").replace(/\\/g, "/").split("/").pop() || filePath;
+  }
+
+  function toFileUrl(filePath) {
+    const normalized = String(filePath || "").replace(/\\/g, "/");
+    if (!normalized) return "";
+    const base = normalized.startsWith("/") ? `file://${normalized}` : `file:///${normalized}`;
+    return encodeURI(base);
   }
 
   function getItemType(item) {
@@ -1891,6 +1972,111 @@
     return target.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
   }
 
+  function startInlineRename(labelNode, options) {
+    if (!labelNode || labelNode.dataset.inlineEditing === "1") return;
+
+    const config = options || {};
+    const parent = labelNode.parentElement;
+    if (!parent) return;
+
+    const initialName = String(config.initialName ?? labelNode.textContent ?? "").trim();
+    labelNode.dataset.inlineEditing = "1";
+    labelNode.classList.add("dp-inline-edit-hidden");
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "dp-inline-edit-input";
+    input.value = initialName;
+    input.maxLength = 180;
+    input.setAttribute("aria-label", "Rename");
+    input.addEventListener("click", (event) => event.stopPropagation());
+    input.addEventListener("dblclick", (event) => event.stopPropagation());
+    input.addEventListener("keydown", (event) => event.stopPropagation());
+    parent.insertBefore(input, labelNode.nextSibling);
+
+    const error = document.createElement("div");
+    error.className = "dp-inline-edit-error";
+    parent.insertBefore(error, input.nextSibling);
+
+    input.focus();
+    input.select();
+
+    let done = false;
+    const showInlineError = (message) => {
+      const text = String(message || "").trim();
+      const hasError = Boolean(text);
+      input.classList.toggle("dp-inline-edit-input-invalid", hasError);
+      error.textContent = text;
+      error.style.display = hasError ? "block" : "none";
+    };
+
+    const validateName = () => {
+      const proposed = input.value.trim();
+      if (!proposed) return "Name cannot be empty";
+      if (typeof config.validate === "function") {
+        return config.validate(proposed) || "";
+      }
+      return "";
+    };
+
+    const cleanup = () => {
+      input.remove();
+      error.remove();
+      labelNode.classList.remove("dp-inline-edit-hidden");
+      labelNode.dataset.inlineEditing = "0";
+    };
+
+    const finish = async (save) => {
+      if (done) return;
+      const proposed = input.value.trim();
+
+      if (!save) {
+        done = true;
+        cleanup();
+        return;
+      }
+
+      const validationError = validateName();
+      if (validationError) {
+        showInlineError(validationError);
+        setTimeout(() => {
+          if (!done) input.focus();
+        }, 0);
+        return;
+      }
+
+      if (proposed === initialName) {
+        done = true;
+        cleanup();
+        return;
+      }
+
+      done = true;
+      cleanup();
+      if (typeof config.onSave === "function") {
+        await config.onSave(proposed);
+      }
+    };
+
+    input.addEventListener("input", () => {
+      showInlineError(validateName());
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        finish(true);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        finish(false);
+      }
+    });
+
+    input.addEventListener("blur", () => {
+      finish(true);
+    });
+  }
+
   async function openTextPreview(item, title) {
     if (!item || getItemType(item) !== "text") return;
     let content = item.previewText || "";
@@ -1911,6 +2097,76 @@
     textPreviewTitle.textContent = title || "Text Preview";
     textPreviewBody.textContent = content || "(empty text)";
     textPreviewOverlay.classList.add("dp-open");
+  }
+
+  function openImagePreview(item, title) {
+    if (!item || getItemType(item) !== "image") return;
+    imagePreviewTitle.textContent = title || "Image Preview";
+    imagePreviewBody.src = toFileUrl(item.filepath);
+    imagePreviewOverlay.classList.add("dp-open");
+  }
+
+  function closeImagePreview() {
+    imagePreviewOverlay.classList.remove("dp-open");
+    imagePreviewBody.src = "";
+  }
+
+  function positionClipImageHover(event) {
+    if (!clipImageHover.classList.contains("dp-open")) return;
+    const offset = 14;
+    const width = clipImageHover.offsetWidth || 240;
+    const height = clipImageHover.offsetHeight || 180;
+    let left = event.clientX + offset;
+    let top = event.clientY + offset;
+    if (left + width > window.innerWidth - 10) {
+      left = event.clientX - width - offset;
+    }
+    if (top + height > window.innerHeight - 10) {
+      top = event.clientY - height - offset;
+    }
+    clipImageHover.style.left = `${Math.max(8, Math.round(left))}px`;
+    clipImageHover.style.top = `${Math.max(8, Math.round(top))}px`;
+  }
+
+  function fitClipImageHoverToImage() {
+    const naturalW = clipImageHoverImg.naturalWidth || 0;
+    const naturalH = clipImageHoverImg.naturalHeight || 0;
+    const maxW = Math.max(220, Math.round(window.innerWidth * 0.62));
+    const maxH = Math.max(160, Math.round(window.innerHeight * 0.56));
+    if (!naturalW || !naturalH) {
+      clipImageHover.style.width = `${Math.min(360, maxW)}px`;
+      clipImageHover.style.height = `${Math.min(280, maxH)}px`;
+      return;
+    }
+
+    const scale = Math.min(maxW / naturalW, maxH / naturalH);
+    const width = Math.max(160, Math.round(naturalW * scale));
+    const height = Math.max(120, Math.round(naturalH * scale));
+    clipImageHover.style.width = `${width}px`;
+    clipImageHover.style.height = `${height}px`;
+  }
+
+  function showClipImageHover(item, event) {
+    clearTimeout(clipImageHoverTimer);
+    clipImageHoverTimer = setTimeout(() => {
+      clipImageHoverImg.src = toFileUrl(item.filepath);
+      fitClipImageHoverToImage();
+      clipImageHoverImg.onload = () => {
+        fitClipImageHoverToImage();
+        positionClipImageHover(event);
+      };
+      clipImageHover.classList.add("dp-open");
+      clipImageHover.setAttribute("aria-hidden", "false");
+      positionClipImageHover(event);
+    }, 130);
+  }
+
+  function hideClipImageHover() {
+    clearTimeout(clipImageHoverTimer);
+    clipImageHover.classList.remove("dp-open");
+    clipImageHover.setAttribute("aria-hidden", "true");
+    clipImageHoverImg.onload = null;
+    clipImageHoverImg.src = "";
   }
 
   function saveZoneName(name) {
@@ -2107,8 +2363,28 @@
       const meta = document.createElement("div");
       meta.className = "dp-memory-meta";
       const name = document.createElement("div");
-      name.className = "dp-memory-name";
+      name.className = "dp-memory-name dp-editable-name";
       name.textContent = folder.name;
+      name.title = "Double click to rename folder";
+      name.addEventListener("dblclick", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        startInlineRename(name, {
+          initialName: folder.name,
+          validate: (nextName) => {
+            const siblings = clipFolders.filter((entry) => entry.parentId === folder.parentId);
+            return isNameTakenInSiblings(nextName, siblings, folder.id)
+              ? "Folder name already exists"
+              : "";
+          },
+          onSave: async (nextName) => {
+            folder.name = nextName;
+            renderItems(window.droppoint.getFiles());
+            scheduleAutoSave();
+            showToast(`Folder renamed: ${nextName}`);
+          },
+        });
+      });
       const preview = document.createElement("div");
       preview.className = "dp-memory-preview";
       const nestedFoldersCount = clipFolders.filter((entry) => entry.parentId === folder.id).length;
@@ -2130,30 +2406,14 @@
         renderItems(window.droppoint.getFiles());
       });
 
-      const renameBtn = document.createElement("button");
-      renameBtn.className = "dp-mini-btn";
-      renameBtn.textContent = "Rename";
-      renameBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        const proposed = window.prompt("Rename folder", folder.name);
-        if (proposed === null) return;
-        const nextName = proposed.trim();
-        if (!nextName) {
-          showToast("Folder name cannot be empty");
-          return;
-        }
-
-        const siblings = clipFolders.filter((entry) => entry.parentId === folder.parentId);
-        if (isNameTakenInSiblings(nextName, siblings, folder.id)) {
-          showToast("Folder name already exists");
-          return;
-        }
-
-        folder.name = nextName;
-        renderItems(window.droppoint.getFiles());
-        scheduleAutoSave();
-        showToast(`Folder renamed: ${nextName}`);
-      });
+    const renameBtn = document.createElement("button");
+    renameBtn.className = "dp-mini-btn";
+    renameBtn.textContent = "Rename";
+    renameBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      name.dispatchEvent(new MouseEvent("dblclick", { bubbles: false }));
+    });
 
       const colorBtn = document.createElement("button");
       colorBtn.className = "dp-mini-btn dp-folder-color-btn";
@@ -2207,8 +2467,37 @@
       meta.className = "dp-memory-meta";
 
       const name = document.createElement("div");
-      name.className = "dp-memory-name";
+      name.className = "dp-memory-name dp-editable-name";
       name.textContent = item.displayName || fileNameFromPath(item.filepath);
+      name.title = "Double click to rename item";
+      name.addEventListener("dblclick", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        startInlineRename(name, {
+          initialName: item.displayName || fileNameFromPath(item.filepath),
+          validate: (nextName) => {
+            const target = nextName.trim().toLowerCase();
+            const duplicate = files.some((entry) => {
+              if (!entry) return false;
+              if (entry.id && item.id) return entry.id !== item.id && String(entry.displayName || fileNameFromPath(entry.filepath)).trim().toLowerCase() === target;
+              return entry.filepath !== item.filepath && String(entry.displayName || fileNameFromPath(entry.filepath)).trim().toLowerCase() === target;
+            });
+            return duplicate ? "Item name already exists" : "";
+          },
+          onSave: async (nextName) => {
+            const nextItems = window.droppoint.getFiles().map((entry) => {
+              if (entry.id === item.id) return { ...entry, displayName: nextName };
+              if (!item.id && entry.filepath === item.filepath) {
+                return { ...entry, displayName: nextName };
+              }
+              return entry;
+            });
+            window.droppoint.replaceItems(nextItems);
+            scheduleAutoSave();
+            showToast(`Item renamed: ${nextName}`);
+          },
+        });
+      });
 
       const preview = document.createElement("div");
       preview.className = "dp-memory-preview";
@@ -2385,8 +2674,36 @@
     header.className = "dp-zone-card-header";
 
     const name = document.createElement("div");
-    name.className = "dp-zone-card-name";
+    name.className = "dp-zone-card-name dp-editable-name";
     name.textContent = zone.name;
+    name.title = "Double click to rename";
+    name.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      startInlineRename(name, {
+        initialName: zone.name,
+        validate: (nextName) => {
+          const target = nextName.trim().toLowerCase();
+          const duplicate = zones.some((entry) => {
+            if (!entry || entry.type !== "zone" || entry.id === zone.id) return false;
+            if ((entry.parentId || ROOT_FOLDER_ID) !== (zone.parentId || ROOT_FOLDER_ID)) return false;
+            return String(entry.name || "").trim().toLowerCase() === target;
+          });
+          return duplicate ? "Zone name already exists" : "";
+        },
+        onSave: async (nextName) => {
+          zone.name = nextName;
+          zone.savedAt = new Date().toISOString();
+          zone.autosaved = false;
+          if (loadedZoneId === zone.id) {
+            saveZoneName(nextName);
+          }
+          await persistZones();
+          renderGallery();
+          showToast(`Zone renamed: ${nextName}`);
+        },
+      });
+    });
 
     const meta = document.createElement("div");
     meta.className = "dp-zone-card-meta";
@@ -2451,9 +2768,7 @@
 
     const filesWrap = document.createElement("div");
     filesWrap.className = "dp-zone-files";
-    const zoneFiles = zone.files || [];
-    const previewLimit = galleryView === "grid" ? 4 : 6;
-    zoneFiles.slice(0, previewLimit).forEach((item) => {
+    (zone.files || []).slice(0, 8).forEach((item) => {
       const itemType = getItemType(item);
       const chip = document.createElement("div");
       chip.className = "dp-file-chip";
@@ -2464,8 +2779,49 @@
       icon.textContent = itemType === "image" ? "IMG" : itemType === "text" ? "TXT" : "FILE";
 
       const label = document.createElement("span");
-      label.className = "dp-file-chip-name";
+      label.className = "dp-file-chip-name dp-editable-name";
       label.textContent = item.displayName || fileNameFromPath(item.filepath);
+      label.title = "Double click to rename item";
+      label.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+
+      label.addEventListener("dblclick", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        startInlineRename(label, {
+          initialName: item.displayName || fileNameFromPath(item.filepath),
+          validate: (nextName) => {
+            const target = nextName.trim().toLowerCase();
+            const duplicate = (zone.files || []).some((entry) => {
+              if (!entry) return false;
+              if (entry.id && item.id) return entry.id !== item.id && String(entry.displayName || fileNameFromPath(entry.filepath)).trim().toLowerCase() === target;
+              return entry.filepath !== item.filepath && String(entry.displayName || fileNameFromPath(entry.filepath)).trim().toLowerCase() === target;
+            });
+            return duplicate ? "Item name already exists" : "";
+          },
+          onSave: async (nextName) => {
+            item.displayName = nextName;
+            zone.savedAt = new Date().toISOString();
+            zone.autosaved = false;
+
+            if (loadedZoneId === zone.id) {
+              const synced = window.droppoint.getFiles().map((entry) => {
+                if (entry.id === item.id) return { ...entry, displayName: nextName };
+                if (!item.id && entry.filepath === item.filepath) {
+                  return { ...entry, displayName: nextName };
+                }
+                return entry;
+              });
+              window.droppoint.replaceItems(synced);
+            }
+
+            await persistZones();
+            renderGallery();
+            showToast(`Item renamed: ${nextName}`);
+          },
+        });
+      });
 
       chip.appendChild(icon);
       chip.appendChild(label);
@@ -2479,20 +2835,6 @@
 
       filesWrap.appendChild(chip);
     });
-
-    if (zoneFiles.length > previewLimit) {
-      const moreChip = document.createElement("div");
-      moreChip.className = "dp-file-chip dp-file-chip-more";
-      moreChip.textContent = `+${zoneFiles.length - previewLimit} more`;
-      filesWrap.appendChild(moreChip);
-    }
-
-    if (!zoneFiles.length) {
-      const empty = document.createElement("div");
-      empty.className = "dp-zone-no-files";
-      empty.textContent = "No files in this zone";
-      filesWrap.appendChild(empty);
-    }
 
     card.appendChild(filesWrap);
 
@@ -2516,8 +2858,32 @@
     header.className = "dp-zone-card-header";
 
     const name = document.createElement("div");
-    name.className = "dp-zone-card-name";
+    name.className = "dp-zone-card-name dp-editable-name";
     name.textContent = folder.name;
+    name.title = "Double click to rename";
+    name.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      startInlineRename(name, {
+        initialName: folder.name,
+        validate: (nextName) => {
+          const siblings = zones.filter(
+            (entry) =>
+              entry.type === "folder" &&
+              (entry.parentId || ROOT_FOLDER_ID) === (folder.parentId || ROOT_FOLDER_ID)
+          );
+          return isNameTakenInSiblings(nextName, siblings, folder.id)
+            ? "Folder name already exists"
+            : "";
+        },
+        onSave: async (nextName) => {
+          folder.name = nextName;
+          await persistZones();
+          renderGallery();
+          showToast(`Folder renamed: ${nextName}`);
+        },
+      });
+    });
 
     const meta = document.createElement("div");
     meta.className = "dp-folder-meta";
@@ -2537,27 +2903,10 @@
     const renameBtn = document.createElement("button");
     renameBtn.className = "dp-card-btn dp-card-btn-load";
     renameBtn.textContent = "Rename";
-    renameBtn.addEventListener("click", async () => {
-      const proposed = window.prompt("Rename folder", folder.name);
-      if (proposed === null) return;
-      const nextName = proposed.trim();
-      if (!nextName) {
-        showToast("Folder name cannot be empty");
-        return;
-      }
-
-      const siblings = zones.filter(
-        (entry) => entry.type === "folder" && (entry.parentId || ROOT_FOLDER_ID) === (folder.parentId || ROOT_FOLDER_ID)
-      );
-      if (isNameTakenInSiblings(nextName, siblings, folder.id)) {
-        showToast("Folder name already exists");
-        return;
-      }
-
-      folder.name = nextName;
-      await persistZones();
-      renderGallery();
-      showToast(`Folder renamed: ${nextName}`);
+    renameBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      name.dispatchEvent(new MouseEvent("dblclick", { bubbles: false }));
     });
 
     bindDropTarget(card, "application/x-dp-zone-id", async (event) => {
@@ -2609,6 +2958,35 @@
         btn.classList.add("dp-crumb-active");
       }
       btn.textContent = crumb.name;
+      if (crumb.id !== ROOT_FOLDER_ID) {
+        btn.title = "Double click to rename folder";
+        btn.addEventListener("dblclick", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const folder = zones.find((entry) => entry.type === "folder" && entry.id === crumb.id);
+          if (!folder) return;
+
+          startInlineRename(btn, {
+            initialName: folder.name,
+            validate: (nextName) => {
+              const siblings = zones.filter(
+                (entry) =>
+                  entry.type === "folder" &&
+                  (entry.parentId || ROOT_FOLDER_ID) === (folder.parentId || ROOT_FOLDER_ID)
+              );
+              return isNameTakenInSiblings(nextName, siblings, folder.id)
+                ? "Folder name already exists"
+                : "";
+            },
+            onSave: async (nextName) => {
+              folder.name = nextName;
+              await persistZones();
+              renderGallery();
+              showToast(`Folder renamed: ${nextName}`);
+            },
+          });
+        });
+      }
       btn.addEventListener("click", () => {
         currentFolderId = crumb.id;
         renderGallery();
@@ -2656,17 +3034,12 @@
     row.className = "dp-clip-item";
     row.draggable = true;
     const itemType = getItemType(item);
-    if (itemType === "text") {
-      row.classList.add("dp-clip-item-text");
-    } else if (itemType === "image") {
-      row.classList.add("dp-clip-item-image");
-    }
 
     const thumb = document.createElement("div");
     thumb.className = "dp-clip-thumb";
     if (itemType === "image") {
       const img = document.createElement("img");
-      img.src = `file://${item.filepath}`;
+      img.src = toFileUrl(item.filepath);
       thumb.appendChild(img);
     } else {
       thumb.textContent = "TXT";
@@ -2688,7 +3061,7 @@
 
     if (itemType === "text") {
       const viewBtn = document.createElement("button");
-      viewBtn.className = "dp-card-btn dp-card-btn-load dp-clip-view-btn";
+      viewBtn.className = "dp-card-btn dp-card-btn-load";
       viewBtn.textContent = "View";
       viewBtn.addEventListener("click", () => {
         openTextPreview(item, item.displayName || "Clipboard text");
@@ -2707,8 +3080,26 @@
 
     row.addEventListener("dragstart", (event) => {
       event.preventDefault();
+      hideClipImageHover();
       window.droppoint.startDragOut([item]);
     });
+
+    if (itemType === "image") {
+      row.addEventListener("mouseenter", (event) => {
+        showClipImageHover(item, event);
+      });
+      row.addEventListener("mousemove", (event) => {
+        positionClipImageHover(event);
+      });
+      row.addEventListener("mouseleave", () => {
+        hideClipImageHover();
+      });
+      row.addEventListener("dblclick", (event) => {
+        if (event.target.closest("button")) return;
+        hideClipImageHover();
+        openImagePreview(item, item.displayName || "Clipboard image");
+      });
+    }
 
     row.appendChild(thumb);
     row.appendChild(meta);
@@ -2717,6 +3108,7 @@
   }
 
   function renderClipboardFlow() {
+    hideClipImageHover();
     clipboardList.innerHTML = "";
     clipboardItems.forEach((item) => {
       clipboardList.appendChild(createClipboardRow(item));
@@ -2889,12 +3281,17 @@
     });
 
     clipboardCloseBtn.addEventListener("click", () => {
+      hideClipImageHover();
       clipboardOverlay.classList.remove("dp-open");
       resizeWidget();
     });
 
     textPreviewCloseBtn.addEventListener("click", () => {
       textPreviewOverlay.classList.remove("dp-open");
+    });
+
+    imagePreviewCloseBtn.addEventListener("click", () => {
+      closeImagePreview();
     });
 
     overlay.addEventListener("click", (event) => {
@@ -2906,6 +3303,7 @@
 
     clipboardOverlay.addEventListener("click", (event) => {
       if (event.target === clipboardOverlay) {
+        hideClipImageHover();
         clipboardOverlay.classList.remove("dp-open");
         resizeWidget();
       }
@@ -2914,6 +3312,12 @@
     textPreviewOverlay.addEventListener("click", (event) => {
       if (event.target === textPreviewOverlay) {
         textPreviewOverlay.classList.remove("dp-open");
+      }
+    });
+
+    imagePreviewOverlay.addEventListener("click", (event) => {
+      if (event.target === imagePreviewOverlay) {
+        closeImagePreview();
       }
     });
 
@@ -2956,6 +3360,9 @@
     });
 
     document.addEventListener("paste", handlePaste);
+    clipboardList.addEventListener("scroll", () => {
+      hideClipImageHover();
+    });
 
     const dragHintZones = [document.getElementById("dp-toolbar"), document.getElementById("droppoint")];
     dragHintZones.forEach((zone) => {
@@ -3022,6 +3429,10 @@
       }
       if (event.key === "Escape" && textPreviewOverlay.classList.contains("dp-open")) {
         textPreviewOverlay.classList.remove("dp-open");
+        return;
+      }
+      if (event.key === "Escape" && imagePreviewOverlay.classList.contains("dp-open")) {
+        closeImagePreview();
         return;
       }
       if (event.key !== "Delete" && event.key !== "Backspace") return;
